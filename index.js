@@ -27,6 +27,10 @@ const employeeRoutes = require('./handlers/routes/employee.route')
 app.use('/employee', employeeRoutes)
 
 app.get('/', (req, res) => {
+    res.render('layouts/rootView');
+});
+
+app.get('/employees', (req, res) => {
     res.render('employee');
 });
 

@@ -32,11 +32,11 @@ block content
         th Salary
         th Hire Date
         th Status
-        th Actions <!-- Ensure this matches the number of columns in tbody -->
+        th Actions
     tbody
       if !employees || employees.length === 0
         tr
-          td(colspan="10") <!-- Updated colspan to match the number of columns -->
+          td(colspan="10")
             p.text-center No employees found.
       else
         each employee in employees
@@ -50,7 +50,7 @@ block content
             td #{employee.salary}
             td #{employee.hireDate}
             td #{employee.employeeStatus}
-            td <!-- Added this column for actions -->
+            td 
               button.btn.btn-sm.btn-primary Edit
               button.btn.btn-sm.btn-danger.ms-1 Delete
 
@@ -135,19 +135,19 @@ block content
           button.btn.btn-secondary(type="button" data-bs-dismiss="modal" onclick="resetEditForm()") Close
           button.btn.btn-primary(type="submit" form="editEmployeeForm") Update Employee
 
+  // Add Employee Form Reset Function 
   script.
     function resetForm() {
       document.getElementById('addEmployeeForm').reset();
     }
 
+    // Reusable function to fetch employees
     async function fetchEmployees(department = '', status = '') {
       try {
         let url = '/employee/fetch';
-
         if (department) {
           url += `?department=${department}`;
         }
-
         if (status) {
           url += `${department ? '&' : '?'}status=${status}`;
         }
@@ -157,12 +157,12 @@ block content
           const employeesData = await employeesResponse.json();
           const tbody = document.querySelector('#employeeTable tbody');
           
-          // Destroy existing DataTable instance
+          // Destroy existing DataTable - Issue filtered data not reflected reason
           if ($.fn.DataTable.isDataTable('#employeeTable')) {
             $('#employeeTable').DataTable().destroy();
           }
 
-          tbody.innerHTML = ''; // Clear existing rows
+          tbody.innerHTML = '';
 
           if (employeesData && employeesData.length > 0) {
             employeesData.forEach(employee => {
@@ -190,7 +190,6 @@ block content
             tbody.appendChild(row);
           }
 
-          // Reinitialize DataTable
           $('#employeeTable').DataTable();
         } else {
           console.error('Failed to fetch employees');
@@ -205,9 +204,9 @@ block content
       try {
         await fetchEmployees();
         const rolesResponse = await fetch('/employee/fetchRoles');
+
         if (rolesResponse.ok) {
           const data = await rolesResponse.json();
-          
          const departmentSelects = document.querySelectorAll('.department');
 
          departmentSelects.forEach(departmentSelect => {
@@ -225,16 +224,15 @@ block content
       }
     });
           
-          // Populate employee status dropdown
+          // employee status dropdown
           const selectAllStatus = document.querySelectorAll('.employeeStatus');
-          // Clear existing options except the first one
+          // Clear existing options except the first one - To Keep unselect option
          selectAllStatus.forEach(statusSelect => {
 
           while (statusSelect.options.length > 1) {
             statusSelect.remove(1);
           }
-          
-          // Add statuses to employee status dropdown
+          // Add status to employee status dropdown
           if (data.employeeStatus && Array.isArray(data.employeeStatus)) {
             data.employeeStatus.forEach(status => {
               const option = document.createElement('option');
@@ -247,18 +245,14 @@ block content
         } else {
           console.error('Failed to fetch roles and statuses');
         }
-
-
       } catch (error) {
         console.error('Error fetching data:', error);
       }
-
         new DataTable('#employeeTable');
-
         $('#employeeTable').DataTable();
-
     });
 
+    // Custom filters apply function
     async function applyFilters() {
       const departmentFilter = document.getElementById('filterDepartment').value;
       const statusFilter = document.getElementById('filterStatus').value;
@@ -269,6 +263,7 @@ block content
       document.getElementById('filterStatus').selectedIndex = 0;
     }
 
+    // Delete employee by emp Id
     async function deleteEmployee(empId) {
       if (confirm('Are you sure you want to delete this employee?')) {
         try {
@@ -293,6 +288,7 @@ block content
       }
     }
 
+    // Create new employee
     document.getElementById('addEmployeeForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -367,10 +363,11 @@ block content
       }
     });
 
-       function resetEditForm() {
+    function resetEditForm() {
       document.getElementById('editEmployeeForm').reset();
-      }
+    }
 
+    // Edit function used with function instead form submit
     async function editEmployee(empId) {
       try {
         const response = await fetch(`/employee/fetch?empId=${empId}`);
