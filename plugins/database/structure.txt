@@ -1,0 +1,23 @@
+columns 
+
+emp_list:
+id , name , role, dob,  emp_status (enum 1- active, 2 - inactive), salary, join_date, created_at, updated_at,
+
+assets_list:
+id, name, brand, model , serial_no ,category_id, status (enum- 0 available, 1-not available, 2-obsolete),  remark, created_at, updated_at 
+
+asset_history:
+id, user_id, issued_by , asset_id, remark, status (enum 1 active, 2 returned), created_at, updated_at
+
+asset_categories:
+id, name, remark, created_at, updated_at
+
+
+relation view :
+
+emp_list.id -> asset_history.user_id 
+emp_list.id -> asset_history.issued_by
+asset_history.asset_id -> assets_list.id 
+
+asset_categories.id -> assets_list.category_id
+

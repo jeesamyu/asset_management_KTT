@@ -1,0 +1,133 @@
+doctype html
+html
+    head
+        title Asset Tracker
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous")
+        link(rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css")
+        style.
+            body {
+                overflow-x: hidden;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                margin: 0;
+            }
+            header {
+                z-index:1;
+            }
+            .main-content {
+                margin-left: 230px;
+                padding: 20px;
+                transition: all 0.3s ease;
+                flex: 1;
+            }
+            footer {
+                position: sticky;
+                bottom: 0;
+                width: 100%;
+                background-color: #343a40;
+            }
+            .sidebar {
+                height: 100vh;
+                width: 220px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                background-color: #343a40;
+                padding-top: 60px;
+                transition: all 0.3s ease;
+            }
+            .sidebar a {
+                padding: 15px 20px;
+                display: block;
+                color: #fff;
+                text-decoration: none;
+                border-left: 4px solid transparent;
+            }
+            .sidebar a:hover {
+                background-color: #495057;
+            }
+            .sidebar a.active {
+                background-color: #495057;
+                border-left: 4px solid #007bff;
+            }
+            .main-content {
+                margin-left: 220px;
+                padding: 20px;
+                transition: all 0.3s ease;
+                flex: 1;
+            }
+            .sidebar.closed {
+                width: 0;
+                overflow: hidden;
+            }
+            .main-content.full-width {
+                margin-left: 0;
+            }
+            .toggle-btn {
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 24px;
+                z-index: 2000;
+            }
+    body
+        // HEADER
+        header.bg-primary.text-white.p-3.position-fixed.w-100.d-flex.align-items-center
+            button.toggle-btn(type="button" onclick="toggleSidebar()")
+                | ☰
+            h2.mb-0.ms-5 Asset Tracker - KT Telematics
+
+        // SIDEBAR
+        nav.sidebar(id="sidebar" class="closed")
+            a(href="/dashboard") Dashboard
+            a(href="/employees") Employees
+            a(href="/assets") Assets
+            a(href="/categories") Categories
+            a(href="/stock") Stock View
+            a(href="/issue") Issue Asset
+            a(href="/return") Return Asset
+            a(href="/scrap") Scrap Asset
+            a(href="/history") Asset History
+
+        // MAIN CONTENT
+        .main-content.full-width(id="mainContent")
+            block content
+
+        // FOOTER
+        footer.bg-dark.text-white.text-center.p-3
+            p © 2025 KT Telematic Solutions | Built by Jeeva 💙
+
+        // SCRIPTS
+        script(src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous")
+        script(src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js")
+        script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous")
+        script.
+            function toggleSidebar() {
+                const sidebar = document.getElementById("sidebar");
+                const content = document.getElementById("mainContent");
+                
+                if (sidebar.classList.contains("closed")) {
+                    sidebar.classList.remove("closed");
+                    content.classList.remove("full-width");
+                } else {
+                    sidebar.classList.add("closed");
+                    content.classList.add("full-width");
+                }
+            }
+
+            // Add active state to current page link
+            document.addEventListener('DOMContentLoaded', function() {
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.sidebar a');
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === currentPath) {
+                        link.classList.add('active');
+                    }
+                });
+            });
