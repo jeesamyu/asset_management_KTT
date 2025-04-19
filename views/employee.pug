@@ -1,0 +1,423 @@
+extends layouts/rootview 
+
+block content
+  h3.mb-4 Employee List
+  
+  .d-flex.justify-content-end.mb-3
+
+
+  // Filter Dropdowns
+  .row.mb-4
+    .col-md-3
+      select.department#filterDepartment.form-control
+        option(value="") Filter by Department
+    .col-md-3
+      select.employeeStatus#filterStatus.form-control
+        option(value="") Filter by Status
+    .col-md-3.d-flex.align-items-center
+      button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search
+      button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addEmployeeModal") 
+        i.fas.fa-plus.me-2
+        | Add Employee
+
+  table#employeeTable.table.table-bordered.table-striped
+    thead
+      tr
+        th Employee ID
+        th Name
+        th Department
+        th Phone
+        th Email
+        th Address
+        th Salary
+        th Hire Date
+        th Status
+        th Actions <!-- Ensure this matches the number of columns in tbody -->
+    tbody
+      if !employees || employees.length === 0
+        tr
+          td(colspan="10") <!-- Updated colspan to match the number of columns -->
+            p.text-center No employees found.
+      else
+        each employee in employees
+          tr
+            td #{employee.empId}
+            td #{employee.name}
+            td #{employee.department}
+            td #{employee.phone}
+            td #{employee.email}
+            td #{employee.address}
+            td #{employee.salary}
+            td #{employee.hireDate}
+            td #{employee.employeeStatus}
+            td <!-- Added this column for actions -->
+              button.btn.btn-sm.btn-primary Edit
+              button.btn.btn-sm.btn-danger.ms-1 Delete
+
+  // Add Employee Modal
+  .modal.fade#addEmployeeModal(tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title#addEmployeeModalLabel Add New Employee
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close" onclick="resetForm()")
+        .modal-body
+          form#addEmployeeForm
+            .row
+              .col-md-6.mb-3
+                label.form-label(for="name") Name
+                input.form-control#name(type="text" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="department") Department
+                select.form-control.department#department(autocomplete="off" required)
+                  option(value="") Select Department
+              .col-md-6.mb-3
+                label.form-label(for="phone") Phone
+                input.form-control#phone(type="tel" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="email") Email
+                input.form-control#email(type="email" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="address") Address
+                input.form-control#address(type="text" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="salary") Salary
+                input.form-control#salary(type="number" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="hireDate") Hire Date
+                input.form-control#hireDate(type="date" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="employeeStatus") Employee Status
+                select.form-control.employeeStatus#employeeStatus(autocomplete="off" required)
+                  option(value="") Select Status
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal" onclick="resetForm()") Close
+          button.btn.btn-primary(type="submit" form="addEmployeeForm") Create Employee
+
+  // Edit Employee Modal
+  .modal.fade#editEmployeeModal(tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title#editEmployeeModalLabel Edit Employee
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close" onclick="resetEditForm()")
+        .modal-body
+          form#editEmployeeForm
+            input(type="hidden" id="editEmpId")
+            .row
+              .col-md-6.mb-3
+                label.form-label(for="editName") Name
+                input.form-control#editName(type="text" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="editDepartment") Department
+                select.form-control.department#editDepartment(autocomplete="off" required)
+                  option(value="") Select Department
+              .col-md-6.mb-3
+                label.form-label(for="editPhone") Phone
+                input.form-control#editPhone(type="tel" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="editEmail") Email
+                input.form-control#editEmail(type="email" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="editAddress") Address
+                input.form-control#editAddress(type="text" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="editSalary") Salary
+                input.form-control#editSalary(type="number" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="EditHireDate") Hire Date
+                input.form-control#EditHireDate(type="date" autocomplete="off" required)
+              .col-md-6.mb-3
+                label.form-label(for="editEmployeeStatus") Employee Status
+                select.form-control.employeeStatus#editEmployeeStatus(autocomplete="off" required)
+                  option(value="") Select Status
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal" onclick="resetEditForm()") Close
+          button.btn.btn-primary(type="submit" form="editEmployeeForm") Update Employee
+
+  script.
+    function resetForm() {
+      document.getElementById('addEmployeeForm').reset();
+    }
+
+    async function fetchEmployees(department = '', status = '') {
+      try {
+        let url = '/employee/fetch';
+
+        if (department) {
+          url += `?department=${department}`;
+        }
+
+        if (status) {
+          url += `${department ? '&' : '?'}status=${status}`;
+        }
+
+        const employeesResponse = await fetch(url);
+        if (employeesResponse.ok) {
+          const employeesData = await employeesResponse.json();
+          const tbody = document.querySelector('#employeeTable tbody');
+          
+          // Destroy existing DataTable instance
+          if ($.fn.DataTable.isDataTable('#employeeTable')) {
+            $('#employeeTable').DataTable().destroy();
+          }
+
+          tbody.innerHTML = ''; // Clear existing rows
+
+          if (employeesData && employeesData.length > 0) {
+            employeesData.forEach(employee => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${employee.empId}</td>
+                <td>${employee.name}</td>
+                <td>${employee.department}</td>
+                <td>${employee.phone}</td>
+                <td>${employee.email}</td>
+                <td>${employee.address}</td>
+                <td>${employee.salary}</td>
+                <td>${employee.hireDate}</td>
+                <td>${employee.employeeStatus}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="editEmployee(${employee.empId})">Edit</button>
+                  <button class="btn btn-sm btn-danger ms-1" onclick="deleteEmployee(${employee.empId})">Delete</button>
+                </td>
+              `;
+              tbody.appendChild(row);
+            });
+          } else {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="10"><p class="text-center">No employees found.</p></td>`;
+            tbody.appendChild(row);
+          }
+
+          // Reinitialize DataTable
+          $('#employeeTable').DataTable();
+        } else {
+          console.error('Failed to fetch employees');
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    }
+
+    // Fetch department roles when the page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        await fetchEmployees();
+        const rolesResponse = await fetch('/employee/fetchRoles');
+        if (rolesResponse.ok) {
+          const data = await rolesResponse.json();
+          
+         const departmentSelects = document.querySelectorAll('.department');
+
+         departmentSelects.forEach(departmentSelect => {
+         while (departmentSelect.options.length > 1) {
+            departmentSelect.remove(1);
+        }
+
+        if (data.roles && Array.isArray(data.roles)) {
+          data.roles.forEach(role => {
+          const option = document.createElement('option');
+          option.value = role.id;
+          option.textContent = role.role_name;
+          departmentSelect.appendChild(option);
+        });
+      }
+    });
+          
+          // Populate employee status dropdown
+          const selectAllStatus = document.querySelectorAll('.employeeStatus');
+          // Clear existing options except the first one
+         selectAllStatus.forEach(statusSelect => {
+
+          while (statusSelect.options.length > 1) {
+            statusSelect.remove(1);
+          }
+          
+          // Add statuses to employee status dropdown
+          if (data.employeeStatus && Array.isArray(data.employeeStatus)) {
+            data.employeeStatus.forEach(status => {
+              const option = document.createElement('option');
+              option.value = status.code;
+              option.textContent = status.label.charAt(0).toUpperCase() + status.label.slice(1);
+              statusSelect.appendChild(option);
+            });
+          }
+         })
+        } else {
+          console.error('Failed to fetch roles and statuses');
+        }
+
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+
+        new DataTable('#employeeTable');
+
+        $('#employeeTable').DataTable();
+
+    });
+
+    async function applyFilters() {
+      const departmentFilter = document.getElementById('filterDepartment').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+      await fetchEmployees(departmentFilter, statusFilter);
+
+      // Clear filters after search
+      document.getElementById('filterDepartment').selectedIndex = 0;
+      document.getElementById('filterStatus').selectedIndex = 0;
+    }
+
+    async function deleteEmployee(empId) {
+      if (confirm('Are you sure you want to delete this employee?')) {
+        try {
+          const response = await fetch('/employee/delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: empId })
+          });
+
+          if (response.ok) {
+            alert('Employee deleted successfully');
+            window.location.reload();
+          } else {
+            alert('Failed to delete employee. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while deleting employee.');
+        }
+      }
+    }
+
+    document.getElementById('addEmployeeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = {
+        name: document.getElementById('name').value,
+        department: document.getElementById('department').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        salary: document.getElementById('salary').value,
+        hireDate: document.getElementById('hireDate').value,
+        employeeStatus: document.getElementById('employeeStatus').value
+      };
+      
+      try {
+        const response = await fetch('/employee/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('addEmployeeModal'));
+          modal.hide();
+          this.reset();
+          window.location.reload();
+        } else {
+          alert('Failed to create employee. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while creating employee.');
+      }
+    });
+
+    document.getElementById('editEmployeeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = {
+        id: document.getElementById('editEmpId').value,
+        name: document.getElementById('editName').value,
+        department: document.getElementById('editDepartment').value,
+        phone: document.getElementById('editPhone').value,
+        email: document.getElementById('editEmail').value,
+        address: document.getElementById('editAddress').value,
+        salary: document.getElementById('editSalary').value,
+        hireDate: document.getElementById('EditHireDate').value,
+        employeeStatus: document.getElementById('editEmployeeStatus').value  
+      }
+
+      try {
+        const response = await fetch('/employee/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        }); 
+        if (response.ok) {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal'));
+          modal.hide();
+          this.reset();
+          window.location.reload();
+        } else {
+          alert('Failed to update employee. Please try again.');
+        }
+      }catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating employee.');
+      }
+    });
+
+       function resetEditForm() {
+      document.getElementById('editEmployeeForm').reset();
+      }
+
+    async function editEmployee(empId) {
+      try {
+        const response = await fetch(`/employee/fetch?empId=${empId}`);
+        if (response.ok) {
+          const employee = await response.json();
+          document.getElementById('editEmpId').value = employee.empId;
+          document.getElementById('editName').value = employee.name;
+          document.getElementById('editPhone').value = employee.phone;
+          document.getElementById('editEmail').value = employee.email;
+          document.getElementById('editAddress').value = employee.address;
+          document.getElementById('editSalary').value = employee.salary;
+          const hireDateInput = document.getElementById('EditHireDate');
+          const hireDate = new Date(employee.hireDate);
+          const formattedDate = hireDate.toISOString().split('T')[0];
+          hireDateInput.value = formattedDate;
+
+          const statusSelect = document.getElementById('editEmployeeStatus');
+          const targetValue = employee.employeeStatusCode;
+        
+          for (let i = 0; i < statusSelect.options.length; i++) {
+            if (statusSelect.options[i].value == targetValue) {
+              statusSelect.selectedIndex = i;
+              break;
+            }
+          }
+        
+          const selectAllDepartment = document.getElementById('editDepartment');
+          const deparmentTarget = employee.departmentId; 
+
+          for (let i = 0; i < selectAllDepartment.options.length; i++) {
+            if (selectAllDepartment.options[i].value == deparmentTarget) {
+              selectAllDepartment.selectedIndex = i;
+              break; 
+            }
+          }
+
+          const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+          modal.show()
+        } else {
+          alert('Failed to fetch employee data.');
+        }
+      } catch (error) {
+        console.error('Error fetching employee data:', error)
+      } finally {
+        const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+        modal.show(); 
+      }
+    }
+
+    
