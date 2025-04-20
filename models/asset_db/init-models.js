@@ -9,7 +9,7 @@ var _employee_role_lookup = require("./employee_role_lookup");
 var _history_status_lookup = require("./history_status_lookup");
 
 function initModels() {
-  var sequelize = require("../../plugins/database/db").myDatabase;
+  var sequelize = require('../../plugins/database/db').myDatabase
   var asset_categories = _asset_categories(sequelize, DataTypes);
   var asset_history = _asset_history(sequelize, DataTypes);
   var asset_status_lookup = _asset_status_lookup(sequelize, DataTypes);

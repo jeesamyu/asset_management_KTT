@@ -21,8 +21,9 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     salary: {
-      type: DataTypes.DECIMAL,
-      allowNull: true
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0
     },
     join_date: {
       type: DataTypes.DATEONLY,
@@ -51,7 +52,7 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'emp_list',
     schema: 'public',
-    timestamps: false,
+    timestamps: true,
     indexes: [
       {
         name: "emp_list_pkey",

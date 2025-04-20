@@ -1,0 +1,358 @@
+extends layouts/rootView
+
+block content 
+    h3.mb-4 Assets Master 
+
+    .d-flex.justify-content-end.mb-3 
+
+    //- Filter Dropdown
+    .row.mb-4 
+        .col-md-3.mb-3 
+            select.assetMake#filterAssetMake.form-control 
+                option(value="") Filter by brand 
+        .col-md-3.mb-3
+            select.assetModel#filterAssetModel.form-control 
+                option(value="") Filter by model 
+        .col-md-3.mb-3
+            input.form-control#filterSerialNo(type="text" placeholder="Filter by Serial No")
+        .col-md-3.mb-3
+            select.assetCategory#filterAssetCategory.form-control 
+                option(value="") Filter by category 
+        .col-md-3.mb-3
+            select.assetStatus#filterAssetStatus.form-control 
+                option(value="") Filter by status
+        .col-md-3.d-flex.align-items-center.mb-2
+            button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
+            button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addNewAssetModel")
+                | + Add Asset 
+
+        table#assetTable.table.table-bordered.table-striped 
+            thead 
+                tr 
+                    th Asset Id 
+                    th Make 
+                    th Model
+                    th Serial No
+                    th Category 
+                    th Status 
+                    th Remark 
+                    th Actions
+            tbody 
+                if !assetsList || assetsList.length === 0
+                    tr 
+                        td(colspan="8")
+                            p.text-center No Assets Found.
+                else 
+                    each items in assetsList 
+                        tr 
+                            td #{items.id}
+                            td #{items.brand} 
+                            td #{items.model} 
+                            td #{items.serial_no} 
+                            td #{items.category}
+                            td #{items.assetStatus} 
+                            td #{items.remark} 
+                            td 
+                                button.btn.btn-sm.btn-primary Edit 
+                                button.btn.btn-sm.btn-danger.ms-1 Delete 
+
+
+        // Update Asset Modal
+        .modal.fade#addNewAssetModel(tabindex="1" aria-labelledby="addNewAssetModalLabel" aria-hidden="true")
+            .modal-dialog.modal-lg 
+                .modal-content 
+                    .modal-header 
+                        h5.modal-title#addNewAssetModalLabel Edit Asset 
+                        button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close" onclick="resetForm()")
+                    .modal-body 
+                        form#addAssetForm(onsubmit="event.preventDefault(); createOrUpdateAsset();")
+                            .row 
+                                .col-md-6.mb-3 
+                                    label.form-label(for="brand") Make 
+                                    input.form-control#brand(type="text" autocomplete="off" required)
+                                .col-md-6.mb-3 
+                                    label.form-label(for="model") Model 
+                                    input.form-control#model(type="text" autocomplete="off" required)
+                                .col-md-6.mb-3 
+                                    label.form-label(for="serialNo") Serial No 
+                                    input.form-control#serialNo(type="text" autocomplete="off" required)
+                                .col-md-6.mb-3 
+                                    label.form-label(for="category") Category 
+                                    select.form-control.category#category(autocomplete="off" required)
+                                        option(value="") Select Category 
+                                .col-md-6.mb-3 
+                                    label.form-label(for="assetStatus") Status 
+                                    select.form-control.assetStatus#assetStatus(autocomplete="off" required)
+                                        option(value="") Select Status   
+                                .col-md-6.mb-3 
+                                    label.form-label(for="remark") Remark 
+                                    input.form-control#remark(type="text" autocomplete="off" required)
+                    .modal-footer 
+                        button.btn.btn-secondary(type="button" data-bs-dismiss="modal" onclick="resetForm()") Close 
+                        button.btn.btn-primary(type="submit" form="addAssetForm") Save Asset 
+    
+    script. 
+        function resetForm() {
+            document.getElementById("addAssetForm").reset();
+            // Remove the editAssetId input if it exists
+            const editAssetIdInput = document.getElementById('editAssetId');
+            if (editAssetIdInput) {
+                editAssetIdInput.remove();
+            }
+        }
+
+        // function for fetch assets 
+        async function fetchAssets(make='', model='', status='', serial_no='', category_id='') {
+            try {
+                let url = '/assets/fetch';
+                console.log("Fetching assets...");
+                
+                const assetsFetchResponse = await fetch(url);
+                if (assetsFetchResponse.ok) {
+                    const assetsData = await assetsFetchResponse.json();
+                    console.log("Assets data received:", assetsData);
+                    
+                    const tbody = document.querySelector('#assetTable tbody');
+                    
+                    // Clear existing DataTable if it exists
+                    if ($.fn.DataTable.isDataTable('#assetTable')) {
+                        $('#assetTable').DataTable().destroy();
+                    }
+                    
+                    // Clear the table body
+                    tbody.innerHTML = '';
+                    
+                    // Populate the table with data
+                    if (assetsData && assetsData.length > 0) {
+                        assetsData.forEach(items => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${items.id}</td>
+                                <td>${items.brand}</td>
+                                <td>${items.model}</td>
+                                <td>${items.serial_no}</td>
+                                <td>${items.category_name}</td>
+                                <td>${items.status_name}</td>
+                                <td>${items.remark}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="editAsset(${items.id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger ms-1" onclick="deleteAsset(${items.id})">Delete</button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    } else {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td colspan="8"><p class="text-center">No Assets Found.</p></td>`;
+                        tbody.appendChild(row);
+                    }
+                    
+                    // Initialize DataTable
+                    $('#assetTable').DataTable();
+                    
+                } else {
+                    console.error('Failed to fetch Assets');
+                }
+            } catch (error) {
+                console.error('Error fetching assets:', error);
+            }
+        }
+
+        // create or update asset
+        async function createOrUpdateAsset() {
+            try {
+                const form = document.getElementById('addAssetForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const brand = document.getElementById('brand').value;
+                const model = document.getElementById('model').value;
+                const serialNo = document.getElementById('serialNo').value;
+                const category = document.getElementById('category').value;
+                const assetStatus = document.getElementById('assetStatus').value;
+                const remark = document.getElementById('remark').value;
+                const assetId = document.getElementById('editAssetId') ? document.getElementById('editAssetId').value : null;
+
+                const url = assetId ? `/assets/update` : '/assets/create';
+                const method = assetId ? 'POST' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        brand,
+                        model,
+                        serial_no: serialNo,
+                        category_id: category,
+                        status_id: assetStatus,
+                        remark,
+                        id: assetId
+                    })
+                });
+
+                if (response.ok) {
+                    $('#addNewAssetModel').modal('hide');
+                    resetForm();
+                    fetchAssets();
+                    alert(assetId ? 'Asset updated successfully' : 'Asset created successfully');
+                } else {
+                    console.error('Failed to save asset');
+                    alert('Failed to save asset');
+                }
+            } catch (error) {
+                console.error('Error saving asset:', error);
+                alert('Error saving asset');
+            }
+        }
+
+        // edit asset
+        async function editAsset(assetId) {
+            try {
+                const response = await fetch(`/assets/fetch?assetId=${assetId}`);
+
+                if (response.ok) {
+                    const assetData = await response.json();
+
+                    if (!assetData) {
+                        throw new Error('No asset data received');
+                    }
+
+                    document.getElementById('brand').value = assetData.brand || '';
+                    document.getElementById('model').value = assetData.model || '';
+                    document.getElementById('serialNo').value = assetData.serial_no || '';
+                    document.getElementById('remark').value = assetData.remark || '';
+                    
+                    const categorySelect = document.getElementById('category');
+                    const categoryTarget = assetData.category_id;
+                    console.log(assetData)
+
+                    for (let i = 0; i < categorySelect.options.length; i++) {
+                        if (categorySelect.options[i].value == categoryTarget) {
+                            categorySelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    const statusSelect = document.getElementById('assetStatus');
+                    const statusTarget = assetData.asset_status_id;
+ 
+                    for (let i = 0; i < statusSelect.options.length; i++) {
+                        if (statusSelect.options[i].value == statusTarget) {
+                            statusSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    let editAssetIdInput = document.getElementById('editAssetId');
+                    if (!editAssetIdInput) {
+                        editAssetIdInput = document.createElement('input');
+                        editAssetIdInput.type = 'hidden';
+                        editAssetIdInput.id = 'editAssetId';
+                        document.getElementById('addAssetForm').appendChild(editAssetIdInput);
+                    }
+                    editAssetIdInput.value = assetId;
+
+                    $('#addNewAssetModel').modal('show');
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch asset data. Status:', response.status, 'Error:', errorText);
+                    alert('Failed to fetch asset data');
+                }
+            } catch (error) {
+                console.error('Error in editAsset function:', error.message);
+                console.error('Full error:', error);
+                alert('Error fetching asset data: ' + error.message);
+            }
+        }
+
+        // delete asset
+        async function deleteAsset(assetId) {
+            try {
+                const response = await fetch(`/assets/delete`, {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: assetId }),
+                }); 
+
+                if (response.ok) {
+                    console.log('Asset deleted successfully');
+                    fetchAssets();
+                    alert('Asset deleted successfully'); 
+                } else {
+                    console.error('Failed to delete asset');
+                    alert('Failed to delete asset');
+                }
+            } catch (error) {
+                console.error('Error deleting asset:', error);
+                alert('Error deleting asset');
+            }
+        }
+
+        // Apply filters function
+        function applyFilters() {
+            const make = document.getElementById('filterAssetMake').value;
+            const model = document.getElementById('filterAssetModel').value;
+            const serialNo = document.getElementById('filterSerialNo').value;
+            const category = document.getElementById('filterAssetCategory').value;
+            const status = document.getElementById('filterAssetStatus').value;
+            
+            fetchAssets(make, model, status, serialNo, category);
+        }
+
+        // Fetch assets, category list and status list when the page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("DOM fully loaded");
+            try {
+                await fetchAssets();
+
+                const categoryResponse = await fetch('/assets/categoriesAndStatus');
+                if (categoryResponse.ok) {
+                    const data = await categoryResponse.json();
+                    const categorySelects = document.querySelectorAll('.category');
+                    const statusSelects = document.querySelectorAll('.assetStatus');
+
+                    categorySelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.assetCategory && Array.isArray(data.assetCategory)) {
+                            data.assetCategory.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.name;
+                                every.appendChild(option);
+                            });
+                        }
+                    });
+
+                    statusSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.assetStatus && Array.isArray(data.assetStatus)) {
+                            data.assetStatus.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });
+                } else {
+                    console.error('Failed to fetch categories and status');
+                }
+            } catch (error) {
+                console.error('Error fetching Data:', error);
+            }
+        });
+
+
+

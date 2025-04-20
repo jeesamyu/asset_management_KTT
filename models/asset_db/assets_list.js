@@ -7,10 +7,6 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       primaryKey: true
     },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false
-    },
     brand: {
       type: DataTypes.STRING(100),
       allowNull: true
@@ -35,7 +31,7 @@ module.exports = function(sequelize, DataTypes) {
     status: {
       type: DataTypes.SMALLINT,
       allowNull: true,
-      defaultValue: 0,
+      defaultValue: 1,
       references: {
         model: 'asset_status_lookup',
         key: 'code'
@@ -48,7 +44,7 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'assets_list',
     schema: 'public',
-    timestamps: false,
+    timestamps: true,
     indexes: [
       {
         name: "assets_list_pkey",
