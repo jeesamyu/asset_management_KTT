@@ -16,7 +16,7 @@ block content
         .col-md-3.mb-3
             input.form-control#filterSerialNo(type="text" placeholder="Filter by Serial No")
         .col-md-3.mb-3
-            select.assetCategory#filterAssetCategory.form-control 
+            select.category#filterAssetCategory.form-control 
                 option(value="") Filter by category 
         .col-md-3.mb-3
             select.assetStatus#filterAssetStatus.form-control 
@@ -105,6 +105,24 @@ block content
         async function fetchAssets(make='', model='', status='', serial_no='', category_id='') {
             try {
                 let url = '/assets/fetch';
+
+                if (make) {
+                    url += `${url.includes('?') ? '&' : '?'}make=${encodeURIComponent(make)}`;
+                }
+                if (model) {
+                    url += `${url.includes('?') ? '&' : '?'}model=${encodeURIComponent(model)}`;
+                }
+                if (status) {
+                    url += `${url.includes('?') ? '&' : '?'}status=${encodeURIComponent(status)}`;
+                }
+                if (serial_no) {
+                    url += `${url.includes('?') ? '&' : '?'}serial_no=${encodeURIComponent(serial_no)}`;
+                }
+                if (category_id) {
+                    url += `${url.includes('?') ? '&' : '?'}category_id=${encodeURIComponent(category_id)}`; 
+                }
+
+
                 console.log("Fetching assets...");
                 
                 const assetsFetchResponse = await fetch(url);
@@ -141,12 +159,7 @@ block content
                             `;
                             tbody.appendChild(row);
                         });
-                    } else {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `<td colspan="8"><p class="text-center">No Assets Found.</p></td>`;
-                        tbody.appendChild(row);
-                    }
-                    
+                    }                    
                     // Initialize DataTable
                     $('#assetTable').DataTable();
                     
@@ -302,6 +315,13 @@ block content
             const category = document.getElementById('filterAssetCategory').value;
             const status = document.getElementById('filterAssetStatus').value;
             
+            console.log("make", make)
+            console.log("model", model)
+            console.log("serialNo", serialNo)
+            console.log("category", category)
+            console.log("status", status)
+    
+
             fetchAssets(make, model, status, serialNo, category);
         }
 

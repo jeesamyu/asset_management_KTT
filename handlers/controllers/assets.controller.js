@@ -12,8 +12,11 @@ const fetchAssets = async (req, res) => {
     try {
         const {
             assetId,
-            category,
-            status
+            category_id,
+            status,
+            serial_no,
+            make,
+            model
         } = req.query
 
         let where = {
@@ -22,11 +25,20 @@ const fetchAssets = async (req, res) => {
         if(assetId) {
             where.id = assetId
         }
-        if(category) {
-            where.asset_category_id = category
+        if(category_id) {
+            where.category_id = category_id
         }
         if(status) {
             where.status = status 
+        }
+        if(serial_no) {
+            where.serial_no = serial_no
+        }
+        if(make) {
+            where.brand = make
+        }
+        if(model) {
+            where.model = model 
         }
 
         const configurations = {

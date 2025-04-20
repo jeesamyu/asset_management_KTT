@@ -44,7 +44,7 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'assets_list',
     schema: 'public',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "assets_list_pkey",

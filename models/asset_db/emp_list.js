@@ -52,7 +52,7 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'emp_list',
     schema: 'public',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "emp_list_pkey",
