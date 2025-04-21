@@ -27,6 +27,7 @@ myDatabase.authenticate().then(() => {
 
 const employeeRoutes = require('./handlers/routes/employee.route')
 const assetRoutes = require('./handlers/routes/assets.route')
+const assetCategoryRoutes = require('./handlers/routes/assetCategory.route')
 
 app.get('/', (req, res) => {
     res.render('layouts/rootView');
@@ -40,6 +41,11 @@ app.get('/employees', (req, res) => {
 app.use('/assets', assetRoutes)
 app.get('/assets', (req, res) => {
     res.render('assetMaster');
+})
+
+app.use('/assetCategory', assetCategoryRoutes)
+app.get('/categories', (req, res) => {
+    res.render('assetCategory');
 })
 
 app.listen(4040, () => {

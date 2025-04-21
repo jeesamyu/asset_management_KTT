@@ -81,14 +81,13 @@ html
         header.bg-primary.text-white.p-3.position-fixed.w-100.d-flex.align-items-center
             button.toggle-btn(type="button" onclick="toggleSidebar()")
                 | ☰
-            h2.mb-0.ms-5 Asset Tracker - KT Telematics
+            h2.mb-0.ms-5 Asset Tracker
 
         // SIDEBAR
         nav.sidebar(id="sidebar" class="closed")
-            a(href="/dashboard") Dashboard
-            a(href="/employees") Employees
-            a(href="/assets") Assets
-            a(href="/categories") Categories
+            a(href="/employees") Employee Master
+            a(href="/assets") Assets Master
+            a(href="/categories") Asset Category Master
             a(href="/stock") Stock View
             a(href="/issue") Issue Asset
             a(href="/return") Return Asset
@@ -101,7 +100,7 @@ html
 
         // FOOTER
         footer.bg-dark.text-white.text-center.p-3
-            p © 2025 KT Telematic Solutions | Built by Jeeva 💙
+            //- p 2025 KT Telematic Solutions | Built by Jeeva
 
         // SCRIPTS
         script(src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous")

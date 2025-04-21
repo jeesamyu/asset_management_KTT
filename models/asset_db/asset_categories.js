@@ -9,7 +9,8 @@ module.exports = function(sequelize, DataTypes) {
     },
     name: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: false,
+      unique: "unique_asset_category_name"
     },
     remark: {
       type: DataTypes.TEXT,
@@ -25,6 +26,13 @@ module.exports = function(sequelize, DataTypes) {
         unique: true,
         fields: [
           { name: "id" },
+        ]
+      },
+      {
+        name: "unique_asset_category_name",
+        unique: true,
+        fields: [
+          { name: "name" },
         ]
       },
     ]

@@ -1,0 +1,227 @@
+extends layouts/rootView
+
+block content 
+    h3.mb-4 Asset Category Master 
+
+    .d-flex.justify-content-end.mb-3 
+
+    //- Filter Dropdown
+    .row.mb-4 
+        .col-md-9
+        .col-md-3.d-flex.justify-content-end.mb-2
+            button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addNewAssetModel")
+                | + New Category 
+
+        table#assetTable.table.table-bordered.table-striped 
+            thead 
+                tr 
+                    th Category Id 
+                    th Name 
+                    th Remark
+                    th Actions
+            tbody 
+                if !assetCategoryList || assetCategoryList.length === 0
+                    tr 
+                        td(colspan="4")
+                            p.text-center No categories Found.
+                else 
+                    each items in assetCategoryList 
+                        tr 
+                            td #{items.id}
+                            td #{items.name} 
+                            td #{items.remark} 
+                            td 
+                                button.btn.btn-sm.btn-primary Edit 
+                                button.btn.btn-sm.btn-danger.ms-1 Delete 
+
+
+        // Update Asset Modal
+        .modal.fade#addNewAssetModel(tabindex="1" aria-labelledby="addNewAssetModalLabel" aria-hidden="true")
+            .modal-dialog.modal-lg 
+                .modal-content 
+                    .modal-header 
+                        h5.modal-title#addNewAssetModalLabel Edit Category 
+                        button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close" onclick="resetForm()")
+                    .modal-body 
+                        form#addAssetForm(onsubmit="event.preventDefault(); createOrUpdateAsset();")
+                            .row 
+                                .col-md-6.mb-3 
+                                    label.form-label(for="categoryName") Category Name 
+                                    input.form-control#categoryName(type="text" autocomplete="off" required)
+                                .col-md-6.mb-3 
+                                    label.form-label(for="remark") Remark 
+                                    input.form-control#remark(type="text" autocomplete="off" required)
+                    .modal-footer 
+                        button.btn.btn-secondary(type="button" data-bs-dismiss="modal" onclick="resetForm()") Close 
+                        button.btn.btn-primary(type="submit" form="addAssetForm") Save Asset 
+    
+    script. 
+        function resetForm() {
+            document.getElementById("addAssetForm").reset();
+            // Remove the editAssetId input if it exists
+            const editAssetIdInput = document.getElementById('editAssetId');
+            if (editAssetIdInput) {
+                editAssetIdInput.remove();
+            }
+        }
+
+        // function for fetch assets 
+        async function fetchAssets(category = '') {
+            try {
+                let url = '/assetCategory/fetch';
+
+                if (category) {
+                    url += `${url.includes('?') ? '&' : '?'}category=${encodeURIComponent(category)}`;
+                }
+                
+                const assetsFetchResponse = await fetch(url);
+                if (assetsFetchResponse.ok) {
+                    const assetsData = await assetsFetchResponse.json();                   
+                    const tbody = document.querySelector('#assetTable tbody');
+                    
+                    // Clear existing DataTable if it exists
+                    if ($.fn.DataTable.isDataTable('#assetTable')) {
+                        $('#assetTable').DataTable().destroy();
+                    }
+                    
+                    // Clear the table body
+                    tbody.innerHTML = '';
+                    
+                    // Populate the table with data
+                    if (assetsData && assetsData.length > 0) {
+                        assetsData.forEach(items => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${items.id}</td>
+                                <td>${items.name}</td>
+                                <td>${items.remark}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="editAsset(${items.id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger ms-1" onclick="deleteAsset(${items.id})">Delete</button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }                    
+                    // Initialize DataTable
+                    $('#assetTable').DataTable();
+                    
+                } else {
+                    console.error('Failed to fetch Assets');
+                }
+            } catch (error) {
+                console.error('Error fetching assets:', error);
+            }
+        }
+
+        // create or update asset
+        async function createOrUpdateAsset() {
+            try {
+                const form = document.getElementById('addAssetForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const name = document.getElementById('categoryName').value;
+                const remark = document.getElementById('remark').value;
+                const assetId = document.getElementById('editAssetId') ? document.getElementById('editAssetId').value : null;
+
+                const url = assetId ? `/assetCategory/update` : '/assetCategory/create';
+                const method = 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                       name,
+                       remark,
+                       id: assetId
+                    })
+                });
+
+                if (response.ok) {
+                    $('#addNewAssetModel').modal('hide');
+                    resetForm();
+                    fetchAssets();
+                    alert(assetId ? 'Asset Category updated successfully' : 'Asset Category created successfully');
+                } else {
+                    const errorText = await response.text();
+                    alert(errorText);
+                }
+            } catch (error) {
+                alert('Error saving asset category');
+            }
+        }
+
+        // edit asset
+        async function editAsset(assetId) {
+            try {
+                const response = await fetch(`/assetCategory/fetch?id=${assetId}`);
+
+                if (response.ok) {
+                    const assetData = await response.json();
+
+                    if (!assetData) {
+                        throw new Error('No asset data received');
+                    }
+
+                    document.getElementById('categoryName').value = assetData.name || '';
+                    document.getElementById('remark').value = assetData.remark || '';
+                    
+                    let editAssetIdInput = document.getElementById('editAssetId');
+                    if (!editAssetIdInput) {
+                        editAssetIdInput = document.createElement('input');
+                        editAssetIdInput.type = 'hidden';
+                        editAssetIdInput.id = 'editAssetId';
+                        document.getElementById('addAssetForm').appendChild(editAssetIdInput);
+                    }
+                    editAssetIdInput.value = assetId;
+
+                    $('#addNewAssetModel').modal('show');
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch asset category data. Status:', response.status, 'Error:', errorText);
+                    alert('Failed to fetch asset category data');
+                }
+            } catch (error) {
+                alert('Error fetching asset category data: ' + error.message);
+            }
+        }
+
+        // delete asset
+        async function deleteAsset(assetId) {
+            try {
+                const response = await fetch(`/assetCategory/delete`, {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: assetId }),
+                }); 
+
+                if (response.ok) {
+                    fetchAssets();
+                    alert('Asset category deleted successfully'); 
+                } else {
+                    alert('Failed to delete asset category');
+                }
+            } catch (error) {
+                alert('Error deleting asset category');
+            }
+        }
+
+        // Fetch assets, category list and status list when the page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("DOM fully loaded");
+            try {
+                await fetchAssets();
+            } catch (error) {
+                console.error('Error fetching Data:', error);
+            }
+        });
+
+
+
