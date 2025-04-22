@@ -65,11 +65,11 @@ const fetchEmployees = async (req, res) => {
         }
 
         employees = findEmpoyees
+        return res.send(employees)
     } catch (error) {
         console.log(error)
+        return res.status(500).send('Something went wrong')
     }
-
-    return res.send(employees)
 }
 
 const fetchEmployeeDeparments = async (req, res) => {
@@ -93,7 +93,7 @@ const fetchEmployeeDeparments = async (req, res) => {
         return res.send({ roles: fetchRoles, employeeStatus: fetchEmployeeStatus })
     } catch (error) {
         console.log(error)
-        return res.send('employee', { roles: [], message: error.message })
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -115,7 +115,7 @@ const createEmployee = async (req, res) => {
         return res.send('Employee created successfully')
     } catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -131,7 +131,7 @@ const deleteEmployee = async (req, res) => {
         return res.send('Employee deleted successfully')
     } catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -154,7 +154,7 @@ const updateEmployee = async (req, res) => {
         }) 
     }catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 
     return res.send('Employee updated successfully')

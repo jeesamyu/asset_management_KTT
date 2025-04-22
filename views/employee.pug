@@ -188,10 +188,6 @@ block content
               `;
               tbody.appendChild(row);
             });
-          } else {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td colspan="10"><p class="text-center">No employees found.</p></td>`;
-            tbody.appendChild(row);
           }
 
           $('#employeeTable').DataTable();
@@ -252,8 +248,6 @@ block content
       } catch (error) {
         console.error('Error fetching data:', error);
       }
-        new DataTable('#employeeTable');
-        $('#employeeTable').DataTable();
     });
 
     // Custom filters apply function
