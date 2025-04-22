@@ -1,27 +1,37 @@
 extends layouts/rootView
 
 block content 
-    h3.mb-4 Assets Master 
+    h3.mt-5.text-center Assets Master 
 
     .d-flex.justify-content-end.mb-3 
 
     //- Filter Dropdown
     .row.mb-4 
         .col-md-3.mb-3 
+            label.form-label(for="filterAssetMake")
+                b Filter by Brand
             select.assetMake#filterAssetMake.form-control 
-                option(value="") Filter by brand 
+                option(value="") Select  
         .col-md-3.mb-3
+            label.form-label(for="filterAssetModel")
+                b Filter by Model
             select.assetModel#filterAssetModel.form-control 
-                option(value="") Filter by model 
+                option(value="") Select  
         .col-md-3.mb-3
-            input.form-control#filterSerialNo(type="text" placeholder="Filter by Serial No")
+            label.form-label(for="filterSerialNo")
+                b Filter by Serial No
+            input.form-control#filterSerialNo(type="text" placeholder="Serial No")
         .col-md-3.mb-3
+            label.form-label(for="filterAssetCategory")
+                b Filter by Category
             select.category#filterAssetCategory.form-control 
-                option(value="") Filter by category 
+                option(value="") Select  
         .col-md-3.mb-3
+            label.form-label(for="filterAssetStatus")
+                b Filter by Status
             select.assetStatus#filterAssetStatus.form-control 
-                option(value="") Filter by status
-        .col-md-3.d-flex.align-items-center.mb-2
+                option(value="") Select  
+        .col-md-3.d-flex.align-items-center.mt-3
             button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
             button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addNewAssetModel")
                 | + Add Asset 
@@ -47,13 +57,13 @@ block content
                     each items in assetsList 
                         tr 
                             td #{items.id}
-                            td #{items.brand} 
-                            td #{items.model} 
-                            td #{items.serial_no} 
-                            td #{items.category}
-                            td #{items.purchase_date}
-                            td #{items.assetStatus} 
-                            td #{items.remark} 
+                            td #{items.brand || '-'} 
+                            td #{items.model || '-'} 
+                            td #{items.serial_no || '-'} 
+                            td #{items.category || '-'}
+                            td #{items.purchase_date || '-'}
+                            td #{items.assetStatus || '-'} 
+                            td #{items.remark || '-'} 
                             td 
                                 button.btn.btn-sm.btn-primary Edit 
                                 button.btn.btn-sm.btn-danger.ms-1 Delete 
@@ -151,13 +161,13 @@ block content
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td>${items.id}</td>
-                                <td>${items.brand}</td>
-                                <td>${items.model}</td>
-                                <td>${items.serial_no}</td>
-                                <td>${items.category_name}</td>
-                                <td>${items.purchase_date}</td>
-                                <td>${items.status_name}</td>
-                                <td>${items.remark}</td>
+                                <td>${items.brand || '-'}</td>
+                                <td>${items.model || '-'}</td>
+                                <td>${items.serial_no || '-'}</td>
+                                <td>${items.category_name || '-'}</td>
+                                <td>${items.purchase_date || '-'}</td>
+                                <td>${items.status_name || '-'}</td>
+                                <td>${items.remark || '-'}</td>
                                 <td>
                                     <button class="btn btn-sm btn-primary" onclick="editAsset(${items.id})">Edit</button>
                                     <button class="btn btn-sm btn-danger ms-1" onclick="deleteAsset(${items.id})">Delete</button>
@@ -166,9 +176,8 @@ block content
                             tbody.appendChild(row);
                         });
                     }                    
-                    // Initialize DataTable
+
                     $('#assetTable').DataTable();
-                    
                 } else {
                     const errorText = await assetsFetchResponse.text();
                     console.error('Failed to fetch Assets');

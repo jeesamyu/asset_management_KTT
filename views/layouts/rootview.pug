@@ -90,8 +90,7 @@ html
             a(href="/categories") Asset Category Master
             a(href="/issueAsset") Issue Asset
             a(href="/assetHistory") Asset History
-            a(href="/stock") Stock View
-            a(href="/return") Return Asset
+            a(href="/returnAsset") Return Asset
             a(href="/scrap") Scrap Asset
 
         // MAIN CONTENT
@@ -101,6 +100,9 @@ html
         // FOOTER
         footer.bg-dark.text-white.text-center.p-3
             //- p 2025 KT Telematic Solutions | Built by Jeeva
+            p#availableStocks
+                | Available Stocks:
+                ul.list-inline
 
         // SCRIPTS
         script(src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous")
@@ -121,7 +123,7 @@ html
             }
 
             // Add active state to current page link
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', async function() {
                 const currentPath = window.location.pathname;
                 const navLinks = document.querySelectorAll('.sidebar a');
                 navLinks.forEach(link => {
@@ -129,4 +131,19 @@ html
                         link.classList.add('active');
                     }
                 });
+
+                const fetchAvailableAssets = await fetch('/common/availableAssets');
+                
+                if(fetchAvailableAssets.ok){
+                    const availableAssets = await fetchAvailableAssets.json();
+                    const stocksElement = document.getElementById('availableStocks');
+                    let stocksHTML = '<ul class="list-inline">';
+
+                    availableAssets.forEach(asset => {
+                        stocksHTML += `<li class="list-inline-item">${asset.category_name}: ${asset.count}</li>`;
+                    });
+
+                    stocksHTML += '</ul>';
+                    stocksElement.innerHTML = `Available Stocks: ${stocksHTML}`;
+                }
             });

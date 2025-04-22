@@ -1,6 +1,9 @@
 const {
     asset_categories
 } = require('../../models/asset_db/init-models').initModels()
+const {
+    Sequelize
+} = require('sequelize')
 
 const fetchAssetCategories = async (req, res) => {
     try {
@@ -44,7 +47,7 @@ const fetchAssetCategories = async (req, res) => {
         return res.send(assetCategories)
     } catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -75,7 +78,7 @@ const createAssetCategory = async (req, res) => {
         return res.send('Asset category created successfully')
     } catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -93,7 +96,7 @@ const deleteAssetCategory = async (req, res) => {
         return res.send('Asset category deleted successfully')
     } catch (error) {
         console.log(error)
-        return res.send('Something went wrong')
+        return res.status(500).send('Something went wrong')
     }
 }
 
@@ -107,34 +110,36 @@ const updateAssetCategory = async (req, res) => {
         const updateData = {}
 
         if (name) {
-            updateData.name = name
+            updateData.name = name;
+
+            const findAssetCategory = await asset_categories.findOne({
+                raw: true,
+                where: {
+                    name,
+                    id: { [Sequelize.Op.ne]: id }
+                },
+                attributes: ['id', 'name']
+            });
+
+            if (findAssetCategory) {
+                return res.status(400).send('Asset category already exists');
+            }
         }
+
         if (remark) {
-            updateData.remark = remark
-        }
-
-        const findAssetCategory = await asset_categories.findOne({
-            raw: true,
-            where: {
-                name
-            },
-            attributes: ['id']
-        })
-
-        if (findAssetCategory) {
-            return res.status(400).send('Asset category already exists')
+            updateData.remark = remark;
         }
 
         await asset_categories.update(updateData, {
             where: {
                 id
             }
-        })
+        });
 
-        return res.send('Asset category updated successfully')
+        return res.send('Asset category updated successfully');
     } catch (error) {
-        console.log(error)
-        return res.send('Something went wrong')
+        console.log(error);
+        return res.status(500).send('Something went wrong');
     }
 }
 

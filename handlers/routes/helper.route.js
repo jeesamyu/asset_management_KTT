@@ -3,10 +3,12 @@ const router = express.Router();
 
 const {
     getEmployeeList,
-    getAssetList
+    getAssetList,
+    getAvailableAssets
 } = require('../controllers/helper.controller')
 
 router.get('/getEmployeeList', getEmployeeList);
 router.get('/getAssetList', getAssetList);
+router.get('/availableAssets', getAvailableAssets);
 
 module.exports = router;

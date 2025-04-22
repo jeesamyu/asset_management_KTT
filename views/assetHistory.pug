@@ -1,22 +1,28 @@
 extends layouts/rootView
 
 block content 
-    h3.mb-4 Asset History
+    h3.mt-5.text-center Asset History
 
     .d-flex.justify-content-end.mb-3 
 
     //- Filter Dropdown
     .row.mb-4 
         .col-md-3.mb-3 
+            label.form-label(for="filterEmployee")
+                b Filter by Brand
             select.form-control.employeeName#filterEmployee
-                option(value="") Filter by Employee 
+                option(value="") Select 
         .col-md-3.mb-3
+            label.form-label(for="filterAsset")
+                b Filter by Asset
             select.form-control.selectAsset#filterAsset
-                option(value="") Filter by Asset
+                option(value="") Select
         .col-md-3.mb-3
+            label.form-label(for="filterCategory")
+                b Filter by Category
             select.form-control.category#filterCategory
-                option(value="") Filter by Category 
-        .col-md-3.d-flex.align-items-center.mb-2
+                option(value="") Select
+        .col-md-3.d-flex.align-items-center.mt-3
             button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
 
         table#assetHistoryTable.table.table-bordered.table-striped 
@@ -92,15 +98,15 @@ block content
                             `;
                             tbody.appendChild(row);
                         });
-                    }             
-                                        
+                    }                            
                 } else {
                     console.error('Failed to fetch Asset History');
                 }
+
+                $('#assetHistoryTable').DataTable({ order: [] });
             } catch (error) {
                 console.error('Error fetching asset history:', error);
             }
-            $('#assetHistoryTable').DataTable();
         }
 
         // Apply filters function

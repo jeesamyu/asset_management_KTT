@@ -1,7 +1,7 @@
 extends layouts/rootview 
 
 block content
-  h3.mb-4 Employee Master
+  h3.mt-5.text-center Employee Master
   
   .d-flex.justify-content-end.mb-3
 
@@ -9,12 +9,16 @@ block content
   // Filter Dropdowns
   .row.mb-4
     .col-md-3
+      label.form-label(for="filterDepartment")
+        b Filter by Department
       select.department#filterDepartment.form-control
-        option(value="") Filter by Department
+        option(value="") Select 
     .col-md-3
+      label.form-label(for="filterStatus")
+        b Filter by Status
       select.employeeStatus#filterStatus.form-control
-        option(value="") Filter by Status
-    .col-md-3.d-flex.align-items-center
+        option(value="") Select 
+    .col-md-3.d-flex.align-items-center.mt-4
       button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search
       button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addEmployeeModal") 
         i.fas.fa-plus.me-2

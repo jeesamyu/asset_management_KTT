@@ -66,7 +66,8 @@ const fetchAssetHistory = async (req, res) => {
                 [Sequelize.col('asset.model'), 'model'],
                 [Sequelize.col('asset.category.name'), 'category'],
                 [Sequelize.col('user.name'), 'employeeName']
-           ]
+           ],
+           group: ['asset.id', 'user.id']
         })
 
         return res.send(assetHistory);

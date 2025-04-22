@@ -32,7 +32,9 @@ const fetchAssets = async (req, res) => {
             where.status = status
         }
         if (serial_no) {
-            where.serial_no = serial_no
+            where.serial_no = {
+                [Sequelize.Op.like]: `%${serial_no}%`
+            }
         }
         if (make) {
             where.brand = make
@@ -54,7 +56,7 @@ const fetchAssets = async (req, res) => {
                 'remark',
                 [Sequelize.col('category.name'), 'category_name'],
                 [Sequelize.col('status_asset_status_lookup.label'), 'status_name'],
-                [Sequelize.literal(`COALESCE(TO_CHAR(purchase_date, 'YYYY-MM-DD'), 'N/A')`), 'purchase_date']
+                'purchase_date'
             ],
             include: [{
                     model: asset_categories,

@@ -1,22 +1,28 @@
 extends layouts/rootView
 
 block content 
-    h3.mb-4 Assets Master 
+    h3.mt-5.text-center Assets Master 
 
     .d-flex.justify-content-end.mb-3 
 
     //- Filter Dropdown
     .row.mb-4 
         .col-md-3.mb-3 
+            label.form-label(for="filterEmployee")
+                b Filter by Employee
             select.form-control.employeeName#filterEmployee
-                option(value="") Filter by Employee 
+                option(value="") Select 
         .col-md-3.mb-3
+            label.form-label(for="filterAsset")
+                b Filter by Asset
             select.form-control.selectAsset#filterAsset
-                option(value="") Filter by Asset
+                option(value="") Select 
         .col-md-3.mb-3
+            label.form-label(for="filterCategory")
+                b Filter by Category
             select.form-control.category#filterCategory
-                option(value="") Filter by Category 
-        .col-md-3.d-flex.align-items-center.mb-2
+                option(value="") Select 
+        .col-md-3.d-flex.align-items-center.mt-3
             button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
             button.btn.btn-success(data-bs-toggle="modal" data-bs-target="#addNewAssetModel")
                 | + Issue Asset 
@@ -144,12 +150,12 @@ block content
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td>${items.id || ''}</td>
-                                <td>${items.employeeName || 'N/A'}</td>
-                                <td>${items.brand || 'N/A'}</td>
-                                <td>${items.model || 'N/A'}</td>
-                                <td>${items.category_name || 'N/A'}</td>
-                                <td>${items.issued_date ? new Date(items.issued_date).toLocaleDateString() : 'N/A'}</td>
-                                <td>${items.remark || 'N/A'}</td> 
+                                <td>${items.employeeName || '-'}</td>
+                                <td>${items.brand || '-'}</td>
+                                <td>${items.model || '-'}</td>
+                                <td>${items.category_name || '-'}</td>
+                                <td>${items.issued_date ? new Date(items.issued_date).toLocaleDateString() : '-'}</td>
+                                <td>${items.remark || '-'}</td> 
                                 <td>
                                     <button class="btn btn-sm btn-primary" onclick="editAsset(${items.id})">Edit</button>
                                     <button class="btn btn-sm btn-danger ms-1" onclick="deleteAsset(${items.id})">Delete</button>

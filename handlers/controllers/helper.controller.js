@@ -1,6 +1,5 @@
 const {
-    Sequelize,
-    where
+    Sequelize
 } = require('sequelize');
 
 const {
@@ -45,7 +44,7 @@ const getAssetList = async (req, res) => {
                 'id',
                 'brand',
                 'model',
-                [Sequelize.col('category.name'), 'category_name'],
+                [Sequelize.fn('COALESCE', Sequelize.col('category.name'), 'UNKNOWN'), 'category_name'],
             ],
             where,
             include: [{
@@ -70,7 +69,32 @@ const getAssetList = async (req, res) => {
     }
 }
 
+const getAvailableAssets = async (req, res) => {
+    try {
+       const getAvailableAssets = await assets_list.findAll({
+        raw: true,
+        group: ['category_id', 'category.name'],
+        attributes: [
+            [Sequelize.fn('COALESCE', Sequelize.col('category.name'), 'UNKNOWN'), 'category_name'], // Use COALESCE to handle null category names
+            [Sequelize.fn('COUNT', Sequelize.col('assets_list.id')), 'count']
+        ],
+        include: [{
+            model: asset_categories,
+            as: 'category',
+            attributes: []
+        }],
+       })
+       
+       res.status(200).json(getAvailableAssets);
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json('Internal Server Error'); 
+    }
+}
+
 module.exports = {
     getEmployeeList,
-    getAssetList
+    getAssetList,
+    getAvailableAssets
 }
