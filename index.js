@@ -61,6 +61,10 @@ app.get('/assetHistory', (req, res) => {
     res.render('assetHistory');
 })
 
+app.get('/assetReturn', (req, res) => {
+    res.render('assetReturn');
+})
+
 
 app.use('/common', commonRoutes)
 

@@ -1,0 +1,208 @@
+extends layouts/rootView
+
+block content 
+    h3.mt-5.text-center Asset Return 
+
+    .d-flex.justify-content-end.mb-3 
+
+    .row.mb-4 
+        .col-md-3.mb-3 
+            label.form-label(for="filterEmployee")
+                b Filter by Employee
+            select.form-control.employeeName#filterEmployee(onchange="toggleAssetDropdown()" required)
+                option(value="") Select 
+        .col-md-3.mb-3
+            label.form-label(for="filterAsset")
+                b Filter by Asset
+            select.form-control.selectAsset#filterAsset(required)
+                option(value="") Select 
+        .col-md-3.d-flex.align-items-center.mt-3
+            button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
+
+    .table-wrapper(style="padding: 0px;")
+        table#assetTable.table.table-bordered.table-striped  
+            thead 
+                tr 
+                    th ID 
+                    th Employee Name  
+                    th Brand
+                    th Model
+                    th Category
+                    th Issued Date
+                    th Action
+            tbody 
+                if !assetsList || assetsList.length === 0
+                    tr 
+                        td(colspan="8")
+                            p.text-center Fetch assets using filters.
+                else 
+                    each items in assetsList 
+                        tr 
+                            td #{items.id}
+                            td #{items.employeeName} 
+                            td #{items.brand} 
+                            td #{items.model}
+                            td #{items.category_name}
+                            td #{items.issued_date}
+                            td 
+                                button.btn.btn-sm.btn-primary(type="button" onclick="takeReturn(#{items.id})") Mark Return
+
+    // Return Asset Modal
+    .modal.fade#returnAssetModal(tabindex="-1" aria-labelledby="returnAssetModalLabel" aria-hidden="true")
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5.modal-title#returnAssetModalLabel Return Asset
+                    button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+                .modal-body
+                    form#returnAssetForm
+                        .mb-3
+                            label.form-label(for="returnDate") Return Date
+                            input.form-control#returnDate(type="date" required)
+                        .mb-3
+                            label.form-label(for="returnRemark") Reason for Return
+                            textarea.form-control#returnRemark(rows="3" required)
+                .modal-footer
+                    button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Close
+                    button.btn.btn-primary(type="button" onclick="submitReturnForm()") Submit
+
+    script.
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Fetch employee list for filter
+                const employeeResponse = await fetch('/common/getEmployeeList');
+                if (employeeResponse.ok) {
+                    const employeeData = await employeeResponse.json();
+                    const employeeSelect = document.getElementById('filterEmployee');
+                    
+                    employeeData.forEach(employee => {
+                        const option = document.createElement('option');
+                        option.value = employee.emp_id;
+                        option.textContent = employee.emp_name;
+                        employeeSelect.appendChild(option);
+                    });
+                } else {
+                    console.error('Failed to fetch employee list');
+                }
+
+                // Fetch asset list for filter
+                const assetResponse = await fetch('/common/getAssetList?type=all');
+                if (assetResponse.ok) {
+                    const assetData = await assetResponse.json();
+                    const assetSelect = document.getElementById('filterAsset');
+                    
+                    assetData.forEach(asset => {
+                        const option = document.createElement('option');
+                        option.value = asset.value;
+                        option.textContent = asset.label;
+                        assetSelect.appendChild(option);
+                    });
+                } else {
+                    console.error('Failed to fetch asset list');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+
+        function applyFilters() {
+            try{
+            const employeeId = document.getElementById('filterEmployee').value;
+            const assetId = document.getElementById('filterAsset').value;
+
+            let url = '/assetProvide/fetch';
+            const params = new URLSearchParams();
+
+            if (assetId) {
+                params.append('asset_id', assetId);
+            }
+
+            if (employeeId) {
+                params.append('employee_id', employeeId);
+            }
+
+            url += `?${params.toString()}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#assetTable tbody');
+                    tbody.innerHTML = '';
+
+                    if (data && data.length > 0) {
+                        data.forEach(items => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${items.id || ''}</td>
+                                <td>${items.employeeName || '-'}</td>
+                                <td>${items.brand || '-'}</td>
+                                <td>${items.model || '-'}</td>
+                                <td>${items.category_name || '-'}</td>
+                                <td>${items.issued_date || '-'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="takeReturn(${items.id})">Take Return</button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    } else {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td colspan="8"><p class="text-center">No Assets Found.</p></td>`;
+                        tbody.appendChild(row);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching assets:', error);
+                });
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            } finally {
+                document.getElementById('filterEmployee').selectedIndex = 0;
+                document.getElementById('filterAsset').selectedIndex = 0;
+            }
+        }
+
+        function takeReturn(assetId) {
+            const returnDateInput = document.getElementById('returnDate');
+            returnDateInput.value = new Date().toISOString().split('T')[0]; // Set default to current date
+            document.getElementById('returnAssetForm').dataset.assetId = assetId;
+            const returnModal = new bootstrap.Modal(document.getElementById('returnAssetModal'));
+            returnModal.show();
+        }
+
+        async function submitReturnForm() {
+            const assetId = document.getElementById('returnAssetForm').dataset.assetId;
+            const returnDate = document.getElementById('returnDate').value;
+            const returnRemark = document.getElementById('returnRemark').value;
+
+            if (!returnRemark.trim()) {
+                alert('Please enter a remark for return.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/assetProvide/return`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: assetId,
+                        returnDate,
+                        returnRemark
+                    })
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('returnAssetModal')).hide();
+                    applyFilters();
+                    alert('Asset returned successfully');
+                } else {
+                    alert('Failed to return asset');
+                }
+            } catch (error) {
+                console.error('Error returning asset:', error);
+                alert(error.message);
+                alert('Error returning asset');
+            }
+        }

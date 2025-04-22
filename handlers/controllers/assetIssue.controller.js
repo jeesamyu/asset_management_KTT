@@ -258,20 +258,20 @@ const updateProviedAsset = async (req, res) => {
 const issuedAssetReturnedByEmployee = async (req, res) => {
     try {
         const {
-            asset_id,
-            returned_date,
-            remark
+            id,
+            returnDate,
+            returnRemark
         } = req.body
 
         const findAsset = await asset_history.findOne({
             raw: true,
             where: {
-                asset_id,
+                id,
                 returned_date: {
                     [Sequelize.Op.is]: null
                 }
             },
-            attributes: ['id', 'remark']
+            attributes: ['id', 'remark', 'asset_id']
         })
 
         if (!findAsset) {
@@ -279,8 +279,8 @@ const issuedAssetReturnedByEmployee = async (req, res) => {
         }
 
         await asset_history.update({
-            returned_date,
-            remark: remark ? `${findAsset.remark} | ${remark} - Asset Returned` : `${findAsset.remark} | Asset Returned`
+            returned_date: returnDate,
+            remark: returnRemark ? `${findAsset.remark} | ${returnRemark} - Asset Returned` : `${findAsset.remark} | Asset Returned`
         }, {
             where: {
                 id: findAsset.id
@@ -291,7 +291,7 @@ const issuedAssetReturnedByEmployee = async (req, res) => {
             status: 1 // available 
         }, {
             where: {
-                id: asset_id
+                id: findAsset.asset_id
             }
         })
 
