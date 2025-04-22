@@ -26,6 +26,14 @@ module.exports = function(sequelize, DataTypes) {
     remark: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    issued_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    returned_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
     }
   }, {
     tableName: 'asset_history',

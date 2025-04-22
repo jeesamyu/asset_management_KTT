@@ -28,6 +28,9 @@ myDatabase.authenticate().then(() => {
 const employeeRoutes = require('./handlers/routes/employee.route')
 const assetRoutes = require('./handlers/routes/assets.route')
 const assetCategoryRoutes = require('./handlers/routes/assetCategory.route')
+const commonRoutes = require('./handlers/routes/helper.route')
+const assetProvideRoutes = require('./handlers/routes/assetIssue.route')
+const assetHistoryRoutes = require('./handlers/routes/assetHistory.route')
 
 app.get('/', (req, res) => {
     res.render('layouts/rootView');
@@ -48,9 +51,18 @@ app.get('/categories', (req, res) => {
     res.render('assetCategory');
 })
 
+app.use('/assetProvide', assetProvideRoutes)
 app.get('/issueAsset', (req, res) => {
     res.render('assetProvide');
 })
+
+app.use('/assetHistory', assetHistoryRoutes)
+app.get('/assetHistory', (req, res) => {
+    res.render('assetHistory');
+})
+
+
+app.use('/common', commonRoutes)
 
 app.listen(4040, () => {
     console.log('SERVER WAS HOSTED ON http://localhost:4040 ')

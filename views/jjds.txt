@@ -1,0 +1,18 @@
+asset master :
+asset create -> asset purchased 
+asset deleted -> asset no longer available 
+
+asset provide :
+// done
+asset issued -> 
+    1. Assethistory = issued to the user , issued on the date, etruned_date is null until he return, remark (asset provied) 
+    2. Asset list = Assigned asset status was unavailable
+
+
+asset provide fetch: 
+    1. Assetshistory = select where retruned_date = null for the user_id and asset 
+
+asset retruned -> 
+    1. Assetshistory = issued to the user, issued on the date, update retruned_date, remark (Asset Was retruned)
+    2. Asset list = status was available 
+    

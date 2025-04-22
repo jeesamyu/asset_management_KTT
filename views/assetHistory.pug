@@ -1,0 +1,190 @@
+extends layouts/rootView
+
+block content 
+    h3.mb-4 Asset History
+
+    .d-flex.justify-content-end.mb-3 
+
+    //- Filter Dropdown
+    .row.mb-4 
+        .col-md-3.mb-3 
+            select.form-control.employeeName#filterEmployee
+                option(value="") Filter by Employee 
+        .col-md-3.mb-3
+            select.form-control.selectAsset#filterAsset
+                option(value="") Filter by Asset
+        .col-md-3.mb-3
+            select.form-control.category#filterCategory
+                option(value="") Filter by Category 
+        .col-md-3.d-flex.align-items-center.mb-2
+            button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
+
+        table#assetHistoryTable.table.table-bordered.table-striped 
+            thead 
+                tr 
+                    th ID 
+                    th Employee Name  
+                    th Make
+                    th Model
+                    th Category
+                    th Issued Date
+                    th Returned Date
+                    th Remark 
+            tbody 
+                if !assetHistory || assetHistory.length === 0
+                    tr 
+                        td(colspan="8")
+                            p.text-center No Asset History Found.
+                else 
+                    each item in assetHistory 
+                        tr 
+                            td #{item.id}
+                            td #{item.employeeName || '-'} 
+                            td #{item.brand || '-'} 
+                            td #{item.model || '-'}
+                            td #{item.category || '-'}
+                            td #{item.issued_date || '-'}
+                            td #{item.returned_date || '-'}
+                            td #{item.remark || '-'} 
+    
+    script. 
+        // function for fetch asset history
+        async function fetchAssetHistory(asset_id = '', category_id='', employee_id='') {
+            try {
+                let url = '/assetHistory/fetch';
+
+                if (asset_id) {
+                    url += `?asset_id=${asset_id}`;
+                }
+
+                if (category_id) {
+                    url += `${url.includes('?') ? '&' : '?'}category_id=${category_id}`;
+                }
+
+                if (employee_id) {
+                    url += `${url.includes('?') ? '&' : '?'}employee_id=${employee_id}`; 
+                }
+
+                const historyResponse = await fetch(url);
+                if (historyResponse.ok) {
+                    const historyData = await historyResponse.json();
+                    
+                    const tbody = document.querySelector('#assetHistoryTable tbody');
+                    
+                    if ($.fn.DataTable.isDataTable('#assetHistoryTable')) {
+                        $('#assetHistoryTable').DataTable().destroy();
+                    }
+                    
+                    tbody.innerHTML = '';
+                    
+                    if (historyData && historyData.length > 0) {
+                        historyData.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${item.id || ''}</td>
+                                <td>${item.employeeName || '-'}</td>
+                                <td>${item.brand || '-'}</td>
+                                <td>${item.model || '-'}</td>
+                                <td>${item.category || '-'}</td>
+                                <td>${item.issued_date || '-'}</td>
+                                <td>${item.returned_date || '-'}</td>
+                                <td>${item.remark || '-'}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }             
+                                        
+                } else {
+                    console.error('Failed to fetch Asset History');
+                }
+            } catch (error) {
+                console.error('Error fetching asset history:', error);
+            }
+            $('#assetHistoryTable').DataTable();
+        }
+
+        // Apply filters function
+        function applyFilters() {
+            const employee = document.getElementById('filterEmployee').value;
+            const asset = document.getElementById('filterAsset').value;
+            const category = document.getElementById('filterCategory').value;
+
+            fetchAssetHistory(asset, category, employee);
+        }
+
+        // DOMContentLoaded event
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("DOM fully loaded");
+            try {
+                await fetchAssetHistory();
+                
+                // Fetch categories
+                const categoryResponse = await fetch('/assets/categoriesAndStatus');
+                if (categoryResponse.ok) {
+                    const data = await categoryResponse.json();
+                    const categorySelects = document.querySelectorAll('.category');
+
+                    categorySelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.assetCategory && Array.isArray(data.assetCategory)) {
+                            data.assetCategory.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.name;
+                                every.appendChild(option);
+                            });
+                        }
+                    });
+                } else {
+                    console.error('Failed to fetch categories');
+                }
+
+                // Fetch employee list for filter
+                const employeeResponse = await fetch('/common/getEmployeeList');
+                if (employeeResponse.ok) {
+                    const employeeData = await employeeResponse.json();
+                    const employeeSelects = document.querySelectorAll('.employeeName');
+                    
+                    employeeSelects.forEach(select => {
+                        if (employeeData && Array.isArray(employeeData)) {
+                            employeeData.forEach(employee => {
+                                const option = document.createElement('option');
+                                option.value = employee.emp_id;
+                                option.textContent = employee.emp_name;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                } else {
+                    console.error('Failed to fetch employee list');
+                }
+
+                // Fetch asset list for filter
+                const assetResponse = await fetch('/common/getAssetList?type=all');
+                if (assetResponse.ok) {
+                    const assetData = await assetResponse.json();
+                    const assetSelects = document.querySelectorAll('.selectAsset');
+                    
+                    assetSelects.forEach(select => {
+                        if (assetData && Array.isArray(assetData)) {
+                            assetData.forEach(asset => {
+                                const option = document.createElement('option');
+                                option.value = asset.value;
+                                option.textContent = asset.label;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                } else {
+                    console.error('Failed to fetch asset list');
+                }
+            } catch (error) {
+                console.error('Error fetching Data:', error);
+            }
+        });
+
+
+
