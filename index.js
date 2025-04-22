@@ -48,6 +48,10 @@ app.get('/categories', (req, res) => {
     res.render('assetCategory');
 })
 
+app.get('/issueAsset', (req, res) => {
+    res.render('assetProvide');
+})
+
 app.listen(4040, () => {
     console.log('SERVER WAS HOSTED ON http://localhost:4040 ')
 })

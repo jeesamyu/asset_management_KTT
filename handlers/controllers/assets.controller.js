@@ -5,7 +5,8 @@ const {
 const {
     assets_list,
     asset_categories,
-    asset_status_lookup
+    asset_status_lookup,
+    asset_history
 } = require('../../models/asset_db/init-models').initModels()
 
 const fetchAssets = async (req, res) => {
@@ -19,26 +20,25 @@ const fetchAssets = async (req, res) => {
             model
         } = req.query
 
-        let where = {
-        }
+        let where = {}
 
-        if(assetId) {
+        if (assetId) {
             where.id = assetId
         }
-        if(category_id) {
+        if (category_id) {
             where.category_id = category_id
         }
-        if(status) {
-            where.status = status 
+        if (status) {
+            where.status = status
         }
-        if(serial_no) {
+        if (serial_no) {
             where.serial_no = serial_no
         }
-        if(make) {
+        if (make) {
             where.brand = make
         }
-        if(model) {
-            where.model = model 
+        if (model) {
+            where.model = model
         }
 
         const configurations = {
@@ -53,7 +53,8 @@ const fetchAssets = async (req, res) => {
                 [Sequelize.col('assets_list.status'), 'asset_status_id'],
                 'remark',
                 [Sequelize.col('category.name'), 'category_name'],
-                [Sequelize.col('status_asset_status_lookup.label'), 'status_name']
+                [Sequelize.col('status_asset_status_lookup.label'), 'status_name'],
+                [Sequelize.literal(`COALESCE(TO_CHAR(purchase_date, 'YYYY-MM-DD'), 'N/A')`), 'purchase_date']
             ],
             include: [{
                     model: asset_categories,
@@ -68,19 +69,17 @@ const fetchAssets = async (req, res) => {
             ]
         }
 
-        if(assetId) {
+        if (assetId) {
             let assetsList = await assets_list.findOne(configurations)
-            return res.send(assetsList) 
+            return res.send(assetsList)
         } else {
             let assetsList = await assets_list.findAll(configurations)
             return res.send(assetsList)
         }
-        
+
     } catch (error) {
         console.log(error)
-        return res.send({
-            error: error.message
-        })
+        return res.status(500).send('There was an error while fetching the assets list.')
     }
 }
 
@@ -91,18 +90,26 @@ const createAsset = async (req, res) => {
             model,
             serial_no,
             category_id,
+            purchase_date,
             status_id,
             remark
         } = req.body
 
-        await assets_list.create({
+        const createdAsset = await assets_list.create({
             brand,
             model,
             serial_no,
             category_id,
+            purchase_date: purchase_date ? new Date(purchase_date) : null,
             status_id,
             remark
         })
+
+        await asset_history.create({
+            asset_id: createdAsset.id,
+            remark: 'Asset purchased/Added to Inventory'
+        })
+
         return res.send({
             message: 'Asset created successfully!'
         })
@@ -130,16 +137,20 @@ const fetchAssetMasterDropdowns = async (req, res) => {
 
         const fetchModelList = await assets_list.findAll({
             raw: true,
-            attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('model')), 'model']]
-          });
+            attributes: [
+                [Sequelize.fn('DISTINCT', Sequelize.col('model')), 'model']
+            ]
+        });
 
-          const fetchBrandList = await assets_list.findAll({
+        const fetchBrandList = await assets_list.findAll({
             raw: true,
-            attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('brand')), 'brand']]
-          });
-          
-        let brandList = fetchBrandList.map((item) => item.brand );
-        let modelList = fetchModelList.map((item) => item.model );       
+            attributes: [
+                [Sequelize.fn('DISTINCT', Sequelize.col('brand')), 'brand']
+            ]
+        });
+
+        let brandList = fetchBrandList.map((item) => item.brand);
+        let modelList = fetchModelList.map((item) => item.model);
 
         return res.send({
             assetCategory,
@@ -163,6 +174,7 @@ const updateAssets = async (req, res) => {
             model,
             serial_no,
             category_id,
+            purchase_date,
             status_id,
             remark
         } = req.body
@@ -186,6 +198,9 @@ const updateAssets = async (req, res) => {
         }
         if (remark) {
             updateData.remark = remark
+        }
+        if (purchase_date) {
+            updateData.purchase_date = new Date(purchase_date)
         }
 
         await assets_list.update(updateData, {

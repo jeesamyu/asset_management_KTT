@@ -9,15 +9,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'emp_list',
-        key: 'id'
-      }
-    },
-    issued_by: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'emp_list',
         key: 'id'
@@ -25,7 +17,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     asset_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'assets_list',
         key: 'id'
@@ -34,11 +26,6 @@ module.exports = function(sequelize, DataTypes) {
     remark: {
       type: DataTypes.TEXT,
       allowNull: true
-    },
-    status: {
-      type: DataTypes.SMALLINT,
-      allowNull: false,
-      defaultValue: 1
     }
   }, {
     tableName: 'asset_history',

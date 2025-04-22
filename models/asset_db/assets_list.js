@@ -40,6 +40,14 @@ module.exports = function(sequelize, DataTypes) {
     remark: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    purchase_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    obsolete_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
     }
   }, {
     tableName: 'assets_list',

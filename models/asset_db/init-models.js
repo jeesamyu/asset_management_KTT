@@ -25,10 +25,8 @@ function initModels() {
   asset_status_lookup.hasMany(assets_list, { as: "assets_lists", foreignKey: "status"});
   asset_history.belongsTo(assets_list, { as: "asset", foreignKey: "asset_id"});
   assets_list.hasMany(asset_history, { as: "asset_histories", foreignKey: "asset_id"});
-  asset_history.belongsTo(emp_list, { as: "issued_by_emp_list", foreignKey: "issued_by"});
-  emp_list.hasMany(asset_history, { as: "asset_histories", foreignKey: "issued_by"});
   asset_history.belongsTo(emp_list, { as: "user", foreignKey: "user_id"});
-  emp_list.hasMany(asset_history, { as: "user_asset_histories", foreignKey: "user_id"});
+  emp_list.hasMany(asset_history, { as: "asset_histories", foreignKey: "user_id"});
   emp_list.belongsTo(emp_status_lookup, { as: "emp_status_emp_status_lookup", foreignKey: "emp_status"});
   emp_status_lookup.hasMany(emp_list, { as: "emp_lists", foreignKey: "emp_status"});
   emp_list.belongsTo(employee_role_lookup, { as: "role", foreignKey: "role_id"});
