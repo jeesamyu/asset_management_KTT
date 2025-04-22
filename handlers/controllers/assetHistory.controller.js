@@ -58,16 +58,19 @@ const fetchAssetHistory = async (req, res) => {
             }
            ],
            attributes: [
-                'id',
-                'remark',
-                'issued_date',
-                'returned_date',
-                [Sequelize.col('asset.brand'), 'brand'],
-                [Sequelize.col('asset.model'), 'model'],
-                [Sequelize.col('asset.category.name'), 'category'],
-                [Sequelize.col('user.name'), 'employeeName']
-           ],
-           group: ['asset.id', 'user.id']
+            [Sequelize.fn('MAX', Sequelize.col('asset_history.id')), 'id'],
+            [Sequelize.fn('MAX', Sequelize.col('asset_history.remark')), 'remark'],
+            [Sequelize.fn('MAX', Sequelize.col('asset_history.issued_date')), 'issued_date'],
+            [Sequelize.fn('MAX', Sequelize.col('asset_history.returned_date')), 'returned_date'],
+            [Sequelize.col('asset.brand'), 'brand'],
+            [Sequelize.col('asset.model'), 'model'],
+            [Sequelize.fn('MAX', Sequelize.col('asset.category.name')), 'category'], // Use an aggregate function
+            [Sequelize.col('user.name'), 'employeeName']
+       ],
+           group: [
+            'asset.id', 
+            'user.id'
+            ]
         })
 
         return res.send(assetHistory);
