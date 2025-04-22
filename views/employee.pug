@@ -193,6 +193,8 @@ block content
           $('#employeeTable').DataTable();
         } else {
           console.error('Failed to fetch employees');
+          const errorText = await employeesResponse.text();
+          alert(errorText);
         }
       } catch (error) {
         console.error('Error fetching employees:', error);
