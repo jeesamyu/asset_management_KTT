@@ -86,7 +86,7 @@ block content
                 }
 
                 // Fetch asset list for filter
-                const assetResponse = await fetch('/common/getAssetList?type=all');
+                const assetResponse = await fetch('/common/getAssetList?type=return');
                 if (assetResponse.ok) {
                     const assetData = await assetResponse.json();
                     const assetSelect = document.getElementById('filterAsset');

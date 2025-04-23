@@ -9,7 +9,7 @@ block content
     .row.mb-4 
         .col-md-3.mb-3 
             label.form-label(for="filterEmployee")
-                b Filter by Brand
+                b Filter by Employee
             select.form-control.employeeName#filterEmployee
                 option(value="") Select 
         .col-md-3.mb-3
@@ -33,8 +33,8 @@ block content
                     th Make
                     th Model
                     th Category
-                    th Issued Date
-                    th Returned Date
+                    th Issued / Purchase Date
+                    th Returned / Scraped Date
                     th Remark 
             tbody 
                 if !assetHistory || assetHistory.length === 0

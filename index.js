@@ -26,11 +26,12 @@ myDatabase.authenticate().then(() => {
 })
 
 const employeeRoutes = require('./handlers/routes/employee.route')
-const assetRoutes = require('./handlers/routes/assets.route')
+const assetRoutes = require('./handlers/routes/assetMaster.route')
 const assetCategoryRoutes = require('./handlers/routes/assetCategory.route')
 const commonRoutes = require('./handlers/routes/helper.route')
 const assetProvideRoutes = require('./handlers/routes/assetIssue.route')
 const assetHistoryRoutes = require('./handlers/routes/assetHistory.route')
+const assetScrapRoutes = require('./handlers/routes/assetScrap.route')
 
 app.get('/', (req, res) => {
     res.render('layouts/rootView');
@@ -65,6 +66,10 @@ app.get('/assetReturn', (req, res) => {
     res.render('assetReturn');
 })
 
+app.use('/assetScrap', assetScrapRoutes)
+app.get('/assetScrap', (req, res) => {
+    res.render('assetScrap');
+})
 
 app.use('/common', commonRoutes)
 

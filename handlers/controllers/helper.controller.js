@@ -32,11 +32,19 @@ const getAssetList = async (req, res) => {
         } = req.query;
 
         let where = {
-            status: 1
+            status: {
+                [Sequelize.Op.notIn]: [3, 4] // 3- obosolete 4-deleted 
+            }
         }
 
         if (type && type === 'all') {
             where = {}
+        } else if (type && type === 'return') {
+            where = {
+                status: {
+                    [Sequelize.Op.notIn]: [3, 4] // 3- obosolete 4-deleted
+                }
+            }
         }
         const assetList = await assets_list.findAll({
             raw: true,

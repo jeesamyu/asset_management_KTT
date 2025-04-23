@@ -190,7 +190,7 @@ block content
             });
           }
 
-          $('#employeeTable').DataTable();
+          $('#employeeTable').DataTable({order: []});
         } else {
           console.error('Failed to fetch employees');
           const errorText = await employeesResponse.text();

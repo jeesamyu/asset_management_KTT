@@ -87,6 +87,7 @@ const deleteAssetCategory = async (req, res) => {
         id
     } = req.body
     try {
+        // in constraints set assets_list.category_id = null for on delete cascade - done by using query interface
         await asset_categories.destroy({
             where: {
                 id

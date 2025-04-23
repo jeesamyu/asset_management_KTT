@@ -1,7 +1,7 @@
 extends layouts/rootView
 
 block content 
-    h3.mt-5.text-center Assets Master 
+    h3.mt-5.text-center Assets Provide 
 
     .d-flex.justify-content-end.mb-3 
 
@@ -112,6 +112,13 @@ block content
                 editAssetIdInput.remove();
             }
         }
+        function applyFilters() {
+            const assetId = document.getElementById('filterAsset').value;
+            const categoryId = document.getElementById('filterCategory').value;
+            const employeeId = document.getElementById('filterEmployee').value;
+
+            fetchAssets(assetId, categoryId, employeeId);
+        }
 
         // function for fetch assets 
         async function fetchAssets(asset_id, category_id='', employee_id='') {
@@ -170,6 +177,10 @@ block content
                 }
             } catch (error) {
                 console.error('Error fetching assets:', error);
+            } finally {
+                document.getElementById('filterAsset').selectedIndex = 0;
+                document.getElementById('filterCategory').selectedIndex = 0;
+                document.getElementById('filterEmployee').selectedIndex = 0;
             }
             $('#assetTable').DataTable();
         }

@@ -356,11 +356,43 @@ block content
             try {
                 await fetchAssets();
 
-                const categoryResponse = await fetch('/assets/categoriesAndStatus');
+                const categoryResponse = await fetch('/assets/categoriesAndStatus?from=assetMaster');
                 if (categoryResponse.ok) {
                     const data = await categoryResponse.json();
                     const categorySelects = document.querySelectorAll('.category');
                     const statusSelects = document.querySelectorAll('.assetStatus');
+                    const brandSelects = document.querySelectorAll('.assetMake');
+                    const modelSelects = document.querySelectorAll('.assetModel');
+
+                    brandSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.brandList && Array.isArray(data.brandList)) {
+                            data.brandList.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.value;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });     
+
+                    modelSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.modelList && Array.isArray(data.modelList)) {
+                            data.modelList.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.value;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });                  
 
                     categorySelects.forEach(every => {
                         while (every.options.length > 1) {

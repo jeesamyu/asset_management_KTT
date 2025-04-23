@@ -20,7 +20,11 @@ const fetchAssets = async (req, res) => {
             model
         } = req.query
 
-        let where = {}
+        let where = {
+            status: {
+                [Sequelize.Op.notIn]: [3, 4] // 3: obsolete, 4: deleted 
+            }
+        }
 
         if (assetId) {
             where.id = assetId
@@ -102,24 +106,21 @@ const createAsset = async (req, res) => {
             model,
             serial_no,
             category_id,
-            purchase_date: purchase_date ? new Date(purchase_date) : null,
+            purchase_date: purchase_date ? new Date(purchase_date) : new Date(),
             status_id,
             remark
         })
 
         await asset_history.create({
             asset_id: createdAsset.id,
-            remark: 'Asset purchased/Added to Inventory'
+            remark: 'Asset purchased/Added to Inventory',
+            issued_date: purchase_date ? new Date(purchase_date) : new Date()
         })
 
-        return res.send({
-            message: 'Asset created successfully!'
-        })
+        return res.send('Asset created successfully!')
     } catch (error) {
         console.log(error)
-        return res.send({
-            error: error.message
-        })
+        return res.status(500).send('Something went wrong while creating the asset.')
     }
 }
 
@@ -130,29 +131,58 @@ const fetchAssetMasterDropdowns = async (req, res) => {
             attributes: ['id', 'name']
         })
 
+        let whereStatus = {}
+        if (req.query && req.query.from && req.query.from === 'assetMaster') {
+            whereStatus = {
+                code: {
+                    [Sequelize.Op.notIn]: [3, 4]
+                }
+            }
+        }
         const assetStatus = await asset_status_lookup.findAll({
             raw: true,
             attributes: [
                 ['code', 'id'], 'label'
-            ]
+            ],
+            where: whereStatus
         })
 
         const fetchModelList = await assets_list.findAll({
             raw: true,
             attributes: [
                 [Sequelize.fn('DISTINCT', Sequelize.col('model')), 'model']
-            ]
+            ],
+            where: {
+                status: {
+                    [Sequelize.Op.notIn]: [3, 4]
+                }
+            }
         });
 
         const fetchBrandList = await assets_list.findAll({
             raw: true,
             attributes: [
                 [Sequelize.fn('DISTINCT', Sequelize.col('brand')), 'brand']
-            ]
+            ],
+            where: {
+                status: {
+                    [Sequelize.Op.notIn]: [3, 4]
+                }
+            }
         });
 
-        let brandList = fetchBrandList.map((item) => item.brand);
-        let modelList = fetchModelList.map((item) => item.model);
+        let brandList = fetchBrandList.map((item) => {
+            return {
+                label: item.brand,
+                value: item.brand
+            }
+        });
+        let modelList = fetchModelList.map((item) => {
+            return {
+                label: item.model,
+                value: item.model
+            }
+        });
 
         return res.send({
             assetCategory,
@@ -162,9 +192,7 @@ const fetchAssetMasterDropdowns = async (req, res) => {
         })
     } catch (error) {
         console.log(error)
-        return res.send({
-            error: error.message
-        })
+        return res.status(500).send('Something went wrong while fetching the asset master dropdowns.')
     }
 }
 
@@ -204,6 +232,26 @@ const updateAssets = async (req, res) => {
         if (purchase_date) {
             updateData.purchase_date = new Date(purchase_date)
         }
+        
+        const findAsset = await assets_list.findOne({
+            raw: true,
+            where: {
+                id
+            },
+            attributes: ['id', 'status']
+        })
+
+        if (findAsset.status === 4) {
+            return res.status(400).send('Asset no longer available!') 
+        }
+
+        if (findAsset.status === 3) {
+            return res.status(400).send('Asset is obsolete!') 
+        }
+
+        if (findAsset.status === 2 && status_id === 1) {
+            return res.status(400).send('Asset is assigned to a user!, please return the asset first!')    
+        }
 
         await assets_list.update(updateData, {
             where: {
@@ -211,14 +259,21 @@ const updateAssets = async (req, res) => {
             }
         })
 
-        return res.send({
-            message: 'Asset updated successfully!'
-        })
+        if (purchase_date) {
+            await asset_history.update({
+                issued_date: new Date(purchase_date)
+            }, {
+                where: {
+                    asset_id: id,
+                    user_id: null
+                }
+            })
+        }
+
+        return res.send('Asset updated successfully!')
     } catch (error) {
         console.log(error)
-        return res.send({
-            error: error.message
-        })
+        return res.status(500).send('Something went wrong while updating the asset.')
     }
 }
 
@@ -228,7 +283,29 @@ const deleteAssets = async (req, res) => {
             id
         } = req.body
 
-        await assets_list.destroy({
+        const findHistory = await asset_history.findOne({
+            raw: true,
+            where: {
+                asset_id: id,
+                user_id: null
+            },
+            attributes: ['id', 'remark']
+        })
+
+        if(findHistory){
+            await asset_history.update({
+               remark: findHistory.remark + ' | Asset was deleted from Inventory',
+               returned_date: new Date()
+            }, {
+                where: {
+                    id: findHistory.id 
+                }
+            })
+        }
+
+        await assets_list.update({
+            status: 4 // deleted
+        } ,{
             where: {
                 id
             }

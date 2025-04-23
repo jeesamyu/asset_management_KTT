@@ -122,7 +122,7 @@ const issuedAssetHistoryFetch = async (req, res) => {
         if(category_id) {
             whereCondition = {
                ...whereCondition,
-                [Sequelize.col('asset.category_id')]: category_id
+                '$asset.category_id$': category_id
             } 
         }
         
@@ -189,6 +189,16 @@ const updateProviedAsset = async (req, res) => {
             raw: true,
             where: {
                 id,
+                user_id: {
+                    [Op.and] : [
+                        {
+                            [Op.not]: null
+                        },
+                        {
+                            [Op.ne]: employee_id
+                        }
+                    ] 
+                },
                 returned_date: {
                     [Sequelize.Op.is]: null
                 }
@@ -196,8 +206,8 @@ const updateProviedAsset = async (req, res) => {
             attributes: ['id', 'remark', 'asset_id']
         })
 
-        if (!findAsset) {
-            return res.status(400).send('Asset not issued to any employee')
+        if (findAsset) {
+            return res.status(400).send('Asset already issued to another employee, please take return first')
         }
 
         if(asset_id) {
@@ -327,7 +337,7 @@ const deleteAssignedAsset = async (req, res) => {
 
         await asset_history.update({
             returned_date: new Date(),
-            remark: remark? `${findAsset.remark} | ${remark} - Asset Deleted` : `${findAsset.remark} | Asset Deleted` 
+            remark: remark? `${findAsset.remark} | ${remark} - Asset Issued Entry Deleted` : `${findAsset.remark} | Asset Issued Entry Deleted` 
         }, {
             where: {
                 id: findAsset.id

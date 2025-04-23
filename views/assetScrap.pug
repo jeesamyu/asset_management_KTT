@@ -1,0 +1,271 @@
+extends layouts/rootView
+
+block content
+    h3.mt-5.text-center Asset Scrap
+
+    .d-flex.justify-content-end.mb-3
+
+    .row.mb-4 
+        .col-md-3.mb-3 
+            label.form-label(for="filterAssetMake")
+                b Filter by Brand
+            select.assetMake#filterAssetMake.form-control 
+                option(value="") Select  
+        .col-md-3.mb-3
+            label.form-label(for="filterAssetModel")
+                b Filter by Model
+            select.assetModel#filterAssetModel.form-control 
+                option(value="") Select  
+        .col-md-3.mb-3
+            label.form-label(for="filterSerialNo")
+                b Filter by Serial No
+            input.form-control#filterSerialNo(type="text" placeholder="Serial No")
+        .col-md-3.mb-3
+            label.form-label(for="filterAssetCategory")
+                b Filter by Category
+            select.category#filterAssetCategory.form-control 
+                option(value="") Select  
+        .col-md-3.d-flex.align-items-center.mt-3
+            button.btn.btn-primary.me-2(type="button" onclick="applyFilters()") Search 
+
+    .table-wrapper(style="padding: 0px;")
+        table#assetTable.table.table-bordered.table-striped
+            thead
+                tr
+                    th Asset Id
+                    th Make
+                    th Model
+                    th Category
+                    th Serial No
+                    th Scraped Date
+                    th Status
+                    th Remark
+                    th Actions
+            tbody
+
+    // Modal for entering obsolete date
+    .modal.fade#obsoleteDateModal(tabindex="-1" aria-labelledby="obsoleteDateModalLabel" aria-hidden="true")
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5.modal-title#obsoleteDateModalLabel Enter Obsolete Date
+                    button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+                .modal-body
+                    form#obsoleteDateForm
+                        .mb-3
+                            label.form-label(for="obsoleteDate") Obsolete Date
+                            input.form-control#obsoleteDate(type="date" required)
+                .modal-footer
+                    button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Close
+                    button.btn.btn-primary(type="button" onclick="submitObsoleteDateForm()") Submit
+
+    script.
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await fetchData();
+                
+                const categoryResponse = await fetch('/assets/categoriesAndStatus');
+                if (categoryResponse.ok) {
+                    const data = await categoryResponse.json();
+                    const categorySelects = document.querySelectorAll('.category');
+                    const statusSelects = document.querySelectorAll('.assetStatus');
+                    const brandSelects = document.querySelectorAll('.assetMake');
+                    const modelSelects = document.querySelectorAll('.assetModel');
+
+                    brandSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.brandList && Array.isArray(data.brandList)) {
+                            data.brandList.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.value;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });     
+
+                    modelSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.modelList && Array.isArray(data.modelList)) {
+                            data.modelList.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.value;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });                  
+
+                    categorySelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.assetCategory && Array.isArray(data.assetCategory)) {
+                            data.assetCategory.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.name;
+                                every.appendChild(option);
+                            });
+                        }
+                    });
+
+                    statusSelects.forEach(every => {
+                        while (every.options.length > 1) {
+                            every.remove(1);
+                        }
+
+                        if (data.assetStatus && Array.isArray(data.assetStatus)) {
+                            data.assetStatus.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.label;
+                                every.appendChild(option);
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+
+        function applyFilters() {
+            const make = document.getElementById('filterAssetMake').value;
+            const model = document.getElementById('filterAssetModel').value;
+            const serialNo = document.getElementById('filterSerialNo').value;
+            const category = document.getElementById('filterAssetCategory').value;
+
+            fetchData(make, model, serialNo, category);
+        }
+
+        async function fetchData(make='', model='', serial_no='', category_id='') {
+            try {
+                // Destroy existing DataTable if it exists
+                if ($.fn.DataTable.isDataTable('#assetTable')) {
+                    $('#assetTable').DataTable().destroy();
+                }
+                
+                let url = '/assetScrap/assetsList';
+
+                if (make) {
+                    url += `${url.includes('?') ? '&' : '?'}make=${encodeURIComponent(make)}`;
+                }
+                if (model) {
+                    url += `${url.includes('?') ? '&' : '?'}model=${encodeURIComponent(model)}`;
+                }
+                if (serial_no) {
+                    url += `${url.includes('?') ? '&' : '?'}serial_no=${encodeURIComponent(serial_no)}`;
+                }
+                if (category_id) {
+                    url += `${url.includes('?') ? '&' : '?'}category_id=${encodeURIComponent(category_id)}`;
+                }
+
+                const assetResponse = await fetch(url);
+
+                if (assetResponse.ok) {
+                    const assetData = await assetResponse.json();
+                    const tbody = document.querySelector('#assetTable tbody');
+                    tbody.innerHTML = '';
+
+                    if (assetData.length > 0) {
+                        assetData.forEach(asset => {
+                            const row = document.createElement('tr');
+                            let rawStatus = asset.rawStatus !== 3
+                            row.innerHTML = `
+                                <td>${asset.id || ''}</td>
+                                <td>${asset.brand || '-'}</td>
+                                <td>${asset.model || '-'}</td>
+                                <td>${asset.category || '-'}</td>
+                                <td>${asset.serial_no || '-'}</td>
+                                <td>${asset.scraped_date || '-'}</td>
+                                <td>${asset.status || '-'}</td>
+                                <td>${asset.remark || '-'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-${rawStatus ? 'danger' : 'primary'}" onclick="editAsset(${asset.id}, ${rawStatus})">${rawStatus !== 3 ? 'Move to Scrap' : 'Change Status'}</button>
+                                </td>`;
+
+                            tbody.appendChild(row);
+                        });
+                    }
+                    
+                    // Clear filters after search
+                    if (make || model || serial_no || category_id) {
+                        document.getElementById('filterAssetMake').selectedIndex = 0;
+                        document.getElementById('filterAssetModel').selectedIndex = 0;
+                        document.getElementById('filterSerialNo').value = '';
+                        document.getElementById('filterAssetCategory').selectedIndex = 0;
+                    }
+                } else {
+                    console.error('Failed to fetch data');
+                }
+
+                // Initialize DataTable after populating the table
+                $('#assetTable').DataTable({order: []});
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        async function editAsset(asset_id = '', scrapOrUpdate) {
+            if (scrapOrUpdate) {
+                // Show modal to enter obsolete date
+                document.getElementById('obsoleteDateForm').dataset.assetId = asset_id;
+                const obsoleteModal = new bootstrap.Modal(document.getElementById('obsoleteDateModal'));
+                obsoleteModal.show();
+            } else {
+                // Update the asset status
+                const response = await fetch(`/assetScrap/updateStatus`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: asset_id })
+                });
+
+                if (response.ok) {
+                    alert('Asset status updated successfully');
+                    fetchData(); // Refresh the data
+                } else {
+                    alert('Failed to update asset status');
+                }
+            }
+        }
+
+        async function submitObsoleteDateForm() {
+            const assetId = document.getElementById('obsoleteDateForm').dataset.assetId;
+            const obsoleteDate = document.getElementById('obsoleteDate').value;
+
+            if (!obsoleteDate) {
+                alert('Please enter an obsolete date.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/assetScrap/scrapAsset`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: assetId, obsoleteDate })
+                });
+
+                if (response.ok) {
+                    alert('Asset moved to scrap successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('obsoleteDateModal')).hide();
+                    fetchData(); // Refresh the data
+                } else {
+                    alert('Failed to move asset to scrap');
+                }
+            } catch (error) {
+                console.error('Error moving asset to scrap:', error);
+                alert('Error moving asset to scrap');
+            }
+        }

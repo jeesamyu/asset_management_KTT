@@ -8,7 +8,10 @@ const fetchEmployees = async (req, res) => {
 
         const { empId, department, status } = req.query
 
-        let where = {    
+        let where = {   
+            emp_status: {
+                [Sequelize.Op.ne]: 3 // deleted 
+            } 
         }
 
         if(empId){
@@ -75,7 +78,7 @@ const fetchEmployees = async (req, res) => {
 const fetchEmployeeDeparments = async (req, res) => {
     try {
         const fetchRoles = await employee_role_lookup.findAll({
-            raw: true,
+            raw: true, 
             attributes: [
                 'id',
                 'role_name'
@@ -84,6 +87,11 @@ const fetchEmployeeDeparments = async (req, res) => {
 
         const fetchEmployeeStatus = await emp_status_lookup.findAll({
             raw: true,
+            where: {
+                code: {
+                    [Sequelize.Op.ne]: 3 // deleted
+                }
+            },
             attributes: [
                 'code',
                 'label'
@@ -122,7 +130,9 @@ const createEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     const { id } = req.body
     try {
-        await emp_list.destroy({
+        await emp_list.update( {
+            emp_status: 3 // deleted
+        },{
             where: {
                 id
             }
